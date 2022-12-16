@@ -1,0 +1,269 @@
+---
+title: "Untitled"
+author: "jbot"
+date: "09/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library("DESeq2")
+library(tidyverse)
+library(ggpubr)
+library(magrittr)
+```
+
+# loading data
+
+loading counts table
+
+```{r}
+#loading data
+counts <- data.frame(read_tsv("NGEI044_exon_featureCounts.raw"))
+
+#renaming gene id
+counts <- counts %>% 
+  dplyr::rename(gene_id = Geneid)
+
+#saving columns that will be removed
+row_info <- counts %>%
+  dplyr::select(gene_id:gene_name)
+
+#removing columns that belong in row info
+counts <- counts %>% 
+  dplyr::select(-(Chr:gene_name))
+
+#adding rownames
+rownames(counts) <- counts$gene_id
+
+#removing gene id column
+counts <- counts %>%
+  dplyr::select(-gene_id)
+```
+
+loading exp design matrix
+
+```{r}
+exp_design <- read.csv("exp_design.csv", row.names=1, sep = ";")
+
+#making factors
+exp_design$protein  <- as.factor(exp_design$protein)
+exp_design$guide  <- as.factor(exp_design$guide)
+exp_design$targeting  <- as.factor(exp_design$targeting)
+
+#setting untrt as first level
+exp_design$protein %<>% relevel("untrt")
+exp_design$guide %<>% relevel("untrt")
+exp_design$targeting %<>% relevel("untrt")
+
+exp_design
+```
+
+Construct the DESeqDataSet object
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                                 colData = exp_design,
+                                 design = ~ protein + guide + targeting)
+```
+
+# Exploratory analysis and visualization
+
+## Pre-filtering
+
+```{r}
+keep <- rowSums(counts(dds)) >= 10
+dds_fil <- dds[keep,]
+```
+
+## Transform the counts for PCA.
+
+```{r}
+vsd <- vst(dds_fil, blind = FALSE)
+head(assay(vsd), 3)
+colData(vsd)
+```
+
+## PCA plot
+
+```{r}
+library(ggrepel)
+pca_data <- plotPCA(vsd, intgroup = c("protein", "guide", "targeting"), returnData = TRUE)
+percentVar <- round(100 * attr(pca_data, "percentVar"))
+
+ggplot(pca_data, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3) +
+  geom_text_repel(label = pca_data$name) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  coord_fixed() +
+  ggtitle("PCA with VST data")
+
+#pca_data
+```
+
+#Differential expression analysis
+
+## Running the differential expression pipeline
+
+```{r}
+dds <- DESeq(dds_fil)
+```
+
+## Building the results tables
+
+FDR of 5%
+
+```{r}
+res_protein <- results(dds, contrast=c("protein","trt","untrt"), alpha = 0.05, lfcThreshold = 1)
+res_guide <- results(dds, contrast=c("guide","trt","untrt"), alpha = 0.05, lfcThreshold = 1)
+res_targeting <- results(dds, contrast=c("targeting","trt","untrt"), alpha = 0.05, lfcThreshold = 1)
+```
+
+Protein summary
+```{r}
+summary(res_protein)
+```
+
+Guide summary
+```{r}
+summary(res_guide)
+```
+
+Targeting summary
+```{r}
+summary(res_targeting)
+```
+
+## MA-plots
+
+```{r}
+library("apeglm")
+```
+
+```{r}
+MA_protein <- lfcShrink(dds, coef="protein_trt_vs_untrt", type="apeglm")
+MA_guide <- lfcShrink(dds, coef="guide_trt_vs_untrt", type="apeglm")
+MA_targeting <- lfcShrink(dds, coef="targeting_trt_vs_untrt", type="apeglm")
+```
+
+For protein
+
+```{r}
+DESeq2::plotMA(MA_protein, ylim = c(-5,5), alpha = 0.05)
+```
+
+For guide
+
+```{r}
+DESeq2::plotMA(MA_guide, ylim = c(-5, 5), alpha = 0.05)
+```
+
+For targeting
+
+```{r}
+DESeq2::plotMA(MA_targeting, ylim = c(-7, 7), alpha = 0.05)
+```
+
+#targeted
+
+```{r}
+library(AnnotationDbi)
+library("org.Hs.eg.db")
+```
+
+```{r}
+ens.str.tar <- substr(rownames(res_targeting), 1, 15)
+res_targeting$symbol <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.tar,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+res_targeting$targetingentrez <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.tar,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+```
+
+```{r}
+resOrdered <- res_targeting[order(res_targeting$pvalue),]
+head(resOrdered)
+```
+
+```{r}
+gene_id <- rownames(res_targeting)
+up_targeting <- res_targeting %>%
+  as.data.frame() %>%
+  cbind(gene_id) %>%
+  filter(padj < 0.05) %>%
+  filter(log2FoldChange > 1) %>%
+  mutate(tenlogp = -log10(padj))
+
+#write.csv2(up_targeting, file = "up_targeting.csv")
+```
+
+```{r}
+gene_id <- rownames(res_targeting)
+down_targeting <- res_targeting %>%
+  as.data.frame() %>%
+  cbind(gene_id) %>%
+  filter(padj < 0.05) %>%
+  filter(log2FoldChange < -1) %>%
+  mutate(tenlogp = -log10(padj))
+
+#write.csv(down_targeting, file = "down_targeting.csv")
+```
+
+# Volcano plot
+
+```{r}
+library('EnhancedVolcano')
+gene_id <- rownames(res_targeting)
+```
+
+
+```{r}
+volcano_plot <- EnhancedVolcano(res_targeting,
+    lab = res_targeting$symbol,
+    selectLab = c(#upregulated
+                  "NRARP", "ARC", "CDKN1A", "LIF", "EGR2", "FOS", "KLF6", "IL11", "CDKN2B", "INHBA",
+                  "CXCL8", "JUNB", "DUSP5", "DUSP1", "DUSP10", "DUSP8", "IGF2", "EGR1", "IL16", "CXCL11",
+                  "CXCL3", "CXCL2", "JUN", "IL24", "ATF3", "KLF4", "CXCL10", "DUSP28", "EGR3", "EGR4", 
+                  "C6orf141", "LINC00452",
+                  #downregulated
+                  "ATP6", "ATP8", "FBLN1", "BCAT1"),
+    x = 'log2FoldChange',
+    y = 'pvalue',
+    pCutoff = 0.05,
+    FCcutoff = 1,
+    title = element_blank(),
+    subtitle = element_blank(),
+    legendPosition = "right",
+    drawConnectors = TRUE,
+    widthConnectors = 0.25,
+    labSize = 1.5) #+
+    #coord_flip()
+volcano_plot
+```
+
+```{r}
+volcano_plot +
+  theme_pubr(base_size = 8) +
+  theme(legend.position = "right",
+        text = element_text(family = "sans")) -> volcano_plot
+volcano_plot
+```
+
+
+```{r}
+ggsave(filename = "volcano_plot_select.pdf", 
+       volcano_plot, 
+       width = 110, 
+       height = 65,
+       useDingbats=FALSE,
+       units = "mm")
+```

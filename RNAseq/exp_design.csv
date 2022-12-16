@@ -1,0 +1,13 @@
+;sampleName;protein;guide;targeting;names;names_r
+eiTOP.2;Empty iTOP;untrt;untrt;untrt;eiTOP-2;eiTOP.2
+eiTOP.1;Empty iTOP;untrt;untrt;untrt;eiTOP-1;eiTOP.1
+noguide.1;No Guide;trt;untrt;untrt;noguide-1;noguide.1
+NT.2;Non targeting;trt;trt;untrt;NT-2;NT.2
+NT.1;Non targeting;trt;trt;untrt;NT-1;NT.1
+noguide.2;No Guide;trt;untrt;untrt;noguide-2;noguide.2
+SP.2;Targeting (SP2);trt;trt;trt;SP-2;SP.2
+SP.3;Targeting (SP2);trt;trt;trt;SP-3;SP.3
+NT.3;Non targeting;trt;trt;untrt;NT-3;NT.3
+SP.1;Targeting (SP2);trt;trt;trt;SP-1;SP.1
+noguide.3;No Guide;trt;untrt;untrt;noguide-3;noguide.3
+eiTOP.3;Empty iTOP;untrt;untrt;untrt;eiTOP-3;eiTOP.3
