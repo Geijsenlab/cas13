@@ -1,59 +1,70 @@
 ---
-title: "Untitled"
-author: "jbot"
-date: "09/07/2020"
+title: "2025_revision"
 output: html_document
+date: "2025-04-22"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
 library("DESeq2")
+library(readr)
+library(magrittr)
+library(dplyr)
 library(tidyverse)
 library(ggpubr)
-library(magrittr)
+library(ggsci)
+library(ggrepel)
+library(AnnotationDbi)
+library("org.Hs.eg.db")
+library(readxl)
 ```
 
-# loading data
+# preparing data
 
-loading counts table
-
+Load dEGFP construct counts. 
 ```{r}
-#loading data
-counts <- data.frame(read_tsv("NGEI044_exon_featureCounts.raw"))
+#loading dEGFP counts
+dEGFP_counts <- read_excel("dEGFP_counts.xlsx") %>%
+  as.data.frame()
 
-#renaming gene id
-counts <- counts %>% 
-  dplyr::rename(gene_id = Geneid)
+rownames(dEGFP_counts) <- dEGFP_counts$gene_id
 
-#saving columns that will be removed
-row_info <- counts %>%
-  dplyr::select(gene_id:gene_name)
-
-#removing columns that belong in row info
-counts <- counts %>% 
-  dplyr::select(-(Chr:gene_name))
-
-#adding rownames
-rownames(counts) <- counts$gene_id
-
-#removing gene id column
-counts <- counts %>%
+dEGFP_counts <- dEGFP_counts %>%
   dplyr::select(-gene_id)
 ```
 
-loading exp design matrix
-
+Loading counts.
 ```{r}
-exp_design <- read.csv("exp_design.csv", row.names=1, sep = ";")
+#loading data
+counts <- data.frame(read_tsv("count_table_allsamples.raw"))
+#renaming gene id
+counts <- counts %>% 
+  dplyr::rename(gene_id = Geneid)
+#saving columns that will be removed
+row_info <- counts %>%
+  dplyr::select(gene_id:gene_name)
+#removing colums that belong in row info
+counts <- counts %>% 
+  dplyr::select(-(Chr:gene_name))
+#adding rownames
+rownames(counts) <- counts$gene_id
+#removing gene id column
+counts <- counts %>%
+  dplyr::select(-gene_id)
+
+colnames(counts) == colnames(dEGFP_counts)
+
+counts <- rbind(counts, dEGFP_counts)
+```
+
+loading experimental design table
+```{r}
+exp_design <- read.csv("exp_design_noctrl.csv", row.names=1, sep = ";")
 
 #making factors
 exp_design$protein  <- as.factor(exp_design$protein)
 exp_design$guide  <- as.factor(exp_design$guide)
 exp_design$targeting  <- as.factor(exp_design$targeting)
-
 #setting untrt as first level
 exp_design$protein %<>% relevel("untrt")
 exp_design$guide %<>% relevel("untrt")
@@ -62,27 +73,25 @@ exp_design$targeting %<>% relevel("untrt")
 exp_design
 ```
 
-Construct the DESeqDataSet object
-
+preparing deseq object
 ```{r}
-dds <- DESeqDataSetFromMatrix(countData = counts,
+dds_rev <- DESeqDataSetFromMatrix(countData = counts,
                                  colData = exp_design,
                                  design = ~ protein + guide + targeting)
 ```
 
-# Exploratory analysis and visualization
-
-## Pre-filtering
-
+pre-filtering low counts
 ```{r}
-keep <- rowSums(counts(dds)) >= 10
-dds_fil <- dds[keep,]
+keep <- rowSums(counts(dds_rev)) >= 10
+dds_rev <- dds_rev[keep,]
 ```
+
+# Exploratory analysis and visualization
 
 ## Transform the counts for PCA.
 
 ```{r}
-vsd <- vst(dds_fil, blind = FALSE)
+vsd <- vst(dds_rev, blind = FALSE)
 head(assay(vsd), 3)
 colData(vsd)
 ```
@@ -110,7 +119,7 @@ ggplot(pca_data, aes(x = PC1, y = PC2)) +
 ## Running the differential expression pipeline
 
 ```{r}
-dds <- DESeq(dds_fil)
+dds_rev <- DESeq(dds_rev)
 ```
 
 ## Building the results tables
@@ -118,152 +127,211 @@ dds <- DESeq(dds_fil)
 FDR of 5%
 
 ```{r}
-res_protein <- results(dds, contrast=c("protein","trt","untrt"), alpha = 0.05, lfcThreshold = 1)
-res_guide <- results(dds, contrast=c("guide","trt","untrt"), alpha = 0.05, lfcThreshold = 1)
-res_targeting <- results(dds, contrast=c("targeting","trt","untrt"), alpha = 0.05, lfcThreshold = 1)
+res_rev_guide <- results(dds_rev, name = "guide_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_rev_protein <- results(dds_rev, name = "protein_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_rev_targeting <- results(dds_rev, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
 ```
 
 Protein summary
 ```{r}
-summary(res_protein)
+summary(res_rev_protein)
 ```
 
 Guide summary
 ```{r}
-summary(res_guide)
+summary(res_rev_guide)
 ```
 
 Targeting summary
 ```{r}
-summary(res_targeting)
+summary(res_rev_targeting)
 ```
 
-## MA-plots
+# volcano plots
 
 ```{r}
-library("apeglm")
-```
+#turn into dataframe
+res_rev_protein_dataframe <- res_rev_protein %>%
+  as.data.frame()
 
-```{r}
-MA_protein <- lfcShrink(dds, coef="protein_trt_vs_untrt", type="apeglm")
-MA_guide <- lfcShrink(dds, coef="guide_trt_vs_untrt", type="apeglm")
-MA_targeting <- lfcShrink(dds, coef="targeting_trt_vs_untrt", type="apeglm")
-```
+res_rev_protein_dataframe$gene_id <- rownames(res_rev_protein_dataframe)
 
-For protein
-
-```{r}
-DESeq2::plotMA(MA_protein, ylim = c(-5,5), alpha = 0.05)
-```
-
-For guide
-
-```{r}
-DESeq2::plotMA(MA_guide, ylim = c(-5, 5), alpha = 0.05)
-```
-
-For targeting
-
-```{r}
-DESeq2::plotMA(MA_targeting, ylim = c(-7, 7), alpha = 0.05)
-```
-
-#targeted
-
-```{r}
-library(AnnotationDbi)
-library("org.Hs.eg.db")
-```
-
-```{r}
-ens.str.tar <- substr(rownames(res_targeting), 1, 15)
-res_targeting$symbol <- mapIds(org.Hs.eg.db,
-                     keys=ens.str.tar,
+#annotate
+ens.str.protein <- rownames(res_rev_protein_dataframe)
+res_rev_protein_dataframe$gene_id <- rownames(res_rev_protein_dataframe)
+res_rev_protein_dataframe$symbol <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.protein,
                      column="SYMBOL",
                      keytype="ENSEMBL",
                      multiVals="first")
-res_targeting$targetingentrez <- mapIds(org.Hs.eg.db,
-                     keys=ens.str.tar,
+res_rev_protein_dataframe$targetingentrez <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.protein,
                      column="ENTREZID",
                      keytype="ENSEMBL",
                      multiVals="first")
+
+res_rev_protein_dataframe <- res_rev_protein_dataframe %>%
+  mutate(symbol = if_else(gene_id == "dEGFP", "dEGFP", symbol))
+
+#save result table
+res_rev_protein_dataframe %>%
+  write_tsv(file = "res_rev_protein.txt")
+
+res_rev_protein_dataframe %>%
+  filter(abs(log2FoldChange) > 1 & padj < 0.05) %>%
+  write_tsv(file = "res_rev_protein_sig.txt")
+```
+
+
+```{r}
+volcanoplot_protein <- res_rev_protein_dataframe %>%
+  ggplot(aes(x = log2FoldChange, y = -log10(padj))) +
+    geom_hline(yintercept = -log10(0.05), lty = "dashed") +
+    geom_vline(xintercept = c(-1, 1), lty = "dashed") +
+    geom_point(size = 0.25) +
+    geom_text_repel(data = filter(res_rev_protein_dataframe, abs(log2FoldChange) > 1 & padj < 0.05), 
+                    aes(label = symbol), nudge_x = -1, nudge_y = 50, size = 1.5) +
+    theme_bw(base_size = 8) +
+    coord_cartesian(xlim = c(-9, 9), ylim = c(0, 260)) +
+    labs(title = "Protein only",
+         subtitle = "4 up, 12 down",
+         x = "Log2 fold change",
+         y = "-log10(adjusted P-value)")
+volcanoplot_protein
 ```
 
 ```{r}
-resOrdered <- res_targeting[order(res_targeting$pvalue),]
-head(resOrdered)
+ggsave(volcanoplot_protein, filename = "volcanoplot_protein.pdf",
+       units = "mm",
+       width = 95, 
+       height = 75)
+```
+
+
+```{r}
+#turn into dataframe
+res_rev_guide_dataframe <- res_rev_guide %>%
+  as.data.frame()
+res_rev_guide_dataframe$gene_id <- rownames(res_rev_guide_dataframe)
+
+#annotate
+ens.str.guide <- rownames(res_rev_guide_dataframe)
+res_rev_guide_dataframe$gene_id <- rownames(res_rev_guide_dataframe)
+res_rev_guide_dataframe$symbol <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.guide,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+res_rev_guide_dataframe$targetingentrez <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.guide,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+#add dEGFP to symbol column
+res_rev_guide_dataframe <- res_rev_guide_dataframe %>%
+  mutate(symbol = if_else(gene_id == "dEGFP", "dEGFP", symbol))
+
+#save result table
+res_rev_guide_dataframe %>%
+  write_tsv(file = "res_rev_guide.txt")
+
+res_rev_guide_dataframe %>%
+  filter(abs(log2FoldChange) > 1 & padj < 0.05) %>%
+  write_tsv(file = "res_rev_guide_sig.txt")
 ```
 
 ```{r}
-gene_id <- rownames(res_targeting)
-up_targeting <- res_targeting %>%
+volcanoplot_nt <- res_rev_guide_dataframe %>%
   as.data.frame() %>%
-  cbind(gene_id) %>%
-  filter(padj < 0.05) %>%
-  filter(log2FoldChange > 1) %>%
-  mutate(tenlogp = -log10(padj))
-
-#write.csv2(up_targeting, file = "up_targeting.csv")
+  ggplot(aes(x = log2FoldChange, y = -log10(padj))) +
+    geom_hline(yintercept = -log10(0.05), lty = "dashed") +
+    geom_vline(xintercept = c(-1, 1), lty = "dashed") +
+    geom_point(size = 0.25) +
+    geom_text_repel(data = filter(res_rev_guide_dataframe, abs(log2FoldChange) > 1 & padj < 0.05), 
+                    aes(label = symbol), nudge_x = -1, nudge_y = 50, size = 1.5) +
+    theme_bw(base_size = 8) +
+    coord_cartesian(xlim = c(-9, 9), ylim = c(0, 260)) +
+    labs(title = "Non-targeting RNP",
+         subtitle = "0 up, 1 down",
+         x = "Log2 fold change",
+         y = "-log10(adjusted P-value)")
+volcanoplot_nt
 ```
 
 ```{r}
-gene_id <- rownames(res_targeting)
-down_targeting <- res_targeting %>%
+ggsave(volcanoplot_nt, filename = "volcanoplot_nt.pdf",
+       units = "mm",
+       width = 95, 
+       height = 75)
+```
+
+```{r}
+#save DEGs
+res_rev_targeting_dataframe <- res_rev_targeting %>%
+  as.data.frame() 
+res_rev_targeting_dataframe$gene_id <- rownames(res_rev_targeting_dataframe)
+
+ens.str.targeting <- rownames(res_rev_targeting_dataframe)
+res_rev_targeting_dataframe$gene_id <- rownames(res_rev_targeting_dataframe)
+res_rev_targeting_dataframe$symbol <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.targeting,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+res_rev_targeting_dataframe$targetingentrez <- mapIds(org.Hs.eg.db,
+                     keys=ens.str.targeting,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+#add dEGFP to symbol column
+res_rev_targeting_dataframe <- res_rev_targeting_dataframe %>%
+  mutate(symbol = if_else(gene_id == "dEGFP", "dEGFP", symbol))
+
+#save result table
+res_rev_targeting_dataframe %>%
+  write_tsv(file = "res_rev_targeting.txt")
+
+res_rev_targeting_dataframe %>%
+  filter(abs(log2FoldChange) > 1 & padj < 0.05) %>%
+  write_tsv(file = "res_rev_targeting_sig.txt")
+```
+
+```{r}
+res_rev_targeting_dataframe %>%
+  filter(gene_id == "dEGFP")
+```
+
+
+```{r}
+#ggrepel list
+ggrepel_list_t <- c("dEGFP", "LIF", "IL11", "CXCL8", "NRARP", "C6orf141", "LINC00452", "ARC", "CDKN1A", "EGR2", "FOS", "FOSB", "JUNB", "DUSP5", "DUSP1", "DUSP10", "DUSP8", "IER2", "IER3", "EGR1",  "SCD", "ATP6", "ATP8", "ND5", "HMOX1", "H2BC20P", "MMP3", "GAS6", "DHRS2", "HTATIP2", "DCLK1", "ARRDC4", "TRIML2", "dEGFP")
+```
+
+```{r}
+volcanoplot_t <- res_rev_targeting_dataframe %>%
   as.data.frame() %>%
-  cbind(gene_id) %>%
-  filter(padj < 0.05) %>%
-  filter(log2FoldChange < -1) %>%
-  mutate(tenlogp = -log10(padj))
-
-#write.csv(down_targeting, file = "down_targeting.csv")
-```
-
-# Volcano plot
-
-```{r}
-library('EnhancedVolcano')
-gene_id <- rownames(res_targeting)
-```
-
-
-```{r}
-volcano_plot <- EnhancedVolcano(res_targeting,
-    lab = res_targeting$symbol,
-    selectLab = c(#upregulated
-                  "NRARP", "ARC", "CDKN1A", "LIF", "EGR2", "FOS", "KLF6", "IL11", "CDKN2B", "INHBA",
-                  "CXCL8", "JUNB", "DUSP5", "DUSP1", "DUSP10", "DUSP8", "IGF2", "EGR1", "IL16", "CXCL11",
-                  "CXCL3", "CXCL2", "JUN", "IL24", "ATF3", "KLF4", "CXCL10", "DUSP28", "EGR3", "EGR4", 
-                  "C6orf141", "LINC00452",
-                  #downregulated
-                  "ATP6", "ATP8", "FBLN1", "BCAT1"),
-    x = 'log2FoldChange',
-    y = 'pvalue',
-    pCutoff = 0.05,
-    FCcutoff = 1,
-    title = element_blank(),
-    subtitle = element_blank(),
-    legendPosition = "right",
-    drawConnectors = TRUE,
-    widthConnectors = 0.25,
-    labSize = 1.5) #+
-    #coord_flip()
-volcano_plot
+  ggplot(aes(x = log2FoldChange, y = -log10(padj))) +
+    geom_hline(yintercept = -log10(0.05), lty = "dashed") +
+    geom_vline(xintercept = c(-1, 1), lty = "dashed") +
+    geom_point(size = 0.25) +
+    geom_text_repel(data = filter(res_rev_targeting_dataframe, symbol %in% ggrepel_list_t),
+                    aes(label = symbol), size = 1.5, box.padding = 0.2, nudge_x = 2, nudge_y = 10) +
+    scale_color_d3() +
+    theme_bw(base_size = 8) +
+    theme(legend.position = "none") +
+    coord_cartesian(xlim = c(-9, 9), ylim = c(0, 260)) +
+    labs(title = "dEGFP targeting",
+         subtitle = "806 up, 41 down",
+         x = "Log2 fold change targeting",
+         y = "-log10(adjusted P-value)")
+volcanoplot_t
 ```
 
 ```{r}
-volcano_plot +
-  theme_pubr(base_size = 8) +
-  theme(legend.position = "right",
-        text = element_text(family = "sans")) -> volcano_plot
-volcano_plot
-```
-
-
-```{r}
-ggsave(filename = "volcano_plot_select.pdf", 
-       volcano_plot, 
-       width = 110, 
-       height = 65,
-       useDingbats=FALSE,
-       units = "mm")
+ggsave(volcanoplot_t, filename = "volcanoplot_t.pdf",
+       units = "mm",
+       width = 95, 
+       height = 75)
 ```
