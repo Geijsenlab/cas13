@@ -86,8 +86,6 @@ keep <- rowSums(counts(dds_rev)) >= 10
 dds_rev <- dds_rev[keep,]
 ```
 
-# Exploratory analysis and visualization
-
 ## Transform the counts for PCA.
 
 ```{r}
@@ -110,11 +108,8 @@ ggplot(pca_data, aes(x = PC1, y = PC2)) +
   ylab(paste0("PC2: ", percentVar[2], "% variance")) +
   coord_fixed() +
   ggtitle("PCA with VST data")
-
-#pca_data
 ```
 
-#Differential expression analysis
 
 ## Running the differential expression pipeline
 
@@ -124,6 +119,11 @@ dds_rev <- DESeq(dds_rev)
 
 ## Building the results tables
 
+The names of all the results deseq2 calculated
+```{r}
+resultsNames(dds_rev)
+```
+
 FDR of 5%
 
 ```{r}
@@ -132,14 +132,14 @@ res_rev_protein <- results(dds_rev, name = "protein_trt_vs_untrt", alpha = 0.05,
 res_rev_targeting <- results(dds_rev, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
 ```
 
-Protein summary
-```{r}
-summary(res_rev_protein)
-```
-
 Guide summary
 ```{r}
 summary(res_rev_guide)
+```
+
+Protein summary
+```{r}
+summary(res_rev_protein)
 ```
 
 Targeting summary
@@ -241,6 +241,7 @@ res_rev_guide_dataframe %>%
   write_tsv(file = "res_rev_guide_sig.txt")
 ```
 
+
 ```{r}
 volcanoplot_nt <- res_rev_guide_dataframe %>%
   as.data.frame() %>%
@@ -335,3 +336,4 @@ ggsave(volcanoplot_t, filename = "volcanoplot_t.pdf",
        width = 95, 
        height = 75)
 ```
+
