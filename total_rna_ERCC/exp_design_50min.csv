@@ -1,0 +1,13 @@
+;sampleName;itop;rnp;targeting
+Empty1_50;Empty1_50;trt;untrt;untrt
+Empty2_50;Empty2_50;trt;untrt;untrt
+Empty3_50;Empty3_50;trt;untrt;untrt
+NT1_50;NT1_50;trt;trt;untrt
+NT2_50;NT2_50;trt;trt;untrt
+NT3_50;NT3_50;trt;trt;untrt
+T1_50;T1_50;trt;trt;trt
+T2_50;T2_50;trt;trt;trt
+T3_50;T3_50;trt;trt;trt
+Untrt1_50;Untrt1_50;untrt;untrt;untrt
+Untrt2_50;Untrt2_50;untrt;untrt;untrt
+Untrt3_50;Untrt3_50;untrt;untrt;untrt
