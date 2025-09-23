@@ -1,0 +1,1298 @@
+---
+title: "DESeq2 ERCC spike-in total RNA sequencing"
+output: html_document
+date: "2025-09-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggsci)
+library(ggpubr)
+library(DESeq2)
+library(broom)
+library(ggpmisc)
+library(viridis)
+library(ggpointdensity)
+```
+
+# loading data
+
+loading count table
+```{r}
+counts <- read_tsv("featurecounts_table.txt", skip = 1)
+```
+
+giving columns sensible names
+```{r}
+counts <- counts %>%
+  dplyr::rename("Empty1_1440" = "BAM_files/1440EmptyTrt1_Aligned.out.bam",
+         "Empty2_1440" = "BAM_files/1440EmptyTrt2_Aligned.out.bam",
+         "Empty3_1440" = "BAM_files/1440EmptyTrt3_Aligned.out.bam",
+         "NT1_1440" = "BAM_files/1440NT1_Aligned.out.bam",
+         "NT2_1440" = "BAM_files/1440NT2_Aligned.out.bam",
+         "NT3_1440" = "BAM_files/1440NT3_Aligned.out.bam",
+         "T1_1440" = "BAM_files/1440T1_Aligned.out.bam",
+         "T2_1440" = "BAM_files/1440T2_Aligned.out.bam",
+         "T3_1440" = "BAM_files/1440T3_Aligned.out.bam",
+         "Untrt1_1440" = "BAM_files/1440Untrt1_Aligned.out.bam",
+         "Untrt2_1440" = "BAM_files/1440Untrt2_Aligned.out.bam",
+         "Untrt3_1440" = "BAM_files/1440Untrt3_Aligned.out.bam",
+         "Empty1_200" = "BAM_files/200EmptyTrt1_Aligned.out.bam",
+         "Empty2_200" = "BAM_files/200EmptyTrt2_Aligned.out.bam",
+         "Empty3_200" = "BAM_files/200EmptyTrt3_Aligned.out.bam",
+         "NT1_200" = "BAM_files/200NT1_Aligned.out.bam",
+         "NT2_200" = "BAM_files/200NT2_Aligned.out.bam",
+         "NT3_200" = "BAM_files/200NT3_Aligned.out.bam",
+         "T1_200" = "BAM_files/200T1_Aligned.out.bam",
+         "T2_200" = "BAM_files/200T2_Aligned.out.bam",
+         "T3_200" = "BAM_files/200T3_Aligned.out.bam",
+         "Untrt1_200" = "BAM_files/200Untrt1_Aligned.out.bam",
+         "Untrt2_200" = "BAM_files/200Untrt2_Aligned.out.bam",
+         "Untrt3_200" = "BAM_files/200Untrt3_Aligned.out.bam",
+         "Empty1_50" = "BAM_files/50EmptyTrt1_Aligned.out.bam",
+         "Empty2_50" = "BAM_files/50EmptyTrt2_Aligned.out.bam",
+         "Empty3_50" = "BAM_files/50EmptyTrt3_Aligned.out.bam",
+         "NT1_50" = "BAM_files/50NT1_Aligned.out.bam",
+         "NT2_50" = "BAM_files/50NT2_Aligned.out.bam",
+         "NT3_50" = "BAM_files/50NT3_Aligned.out.bam",
+         "T1_50" = "BAM_files/50T1_Aligned.out.bam",
+         "T2_50" = "BAM_files/50T2_Aligned.out.bam",
+         "T3_50" = "BAM_files/50T3_Aligned.out.bam",
+         "Untrt1_50" = "BAM_files/50Untrt1_Aligned.out.bam",
+         "Untrt2_50" = "BAM_files/50Untrt2_Aligned.out.bam",
+         "Untrt3_50" = "BAM_files/50Untrt3_Aligned.out.bam")
+```
+
+Loading gene annotations from the gtf used for featurecounts.
+```{r}
+#remake with GTF including ERCCs
+gene_annot <- read_tsv("GRCh83_genes_gtf_forR.txt")
+```
+
+reading ERCC concentrations
+```{r}
+ercc_concentrations <- read_tsv("ERCC_concentrations.txt")
+
+colnames(ercc_concentrations)
+
+ercc_concentrations <- ercc_concentrations %>%
+  dplyr::rename("ERCC_ID" =  "ERCC ID",
+                "mix1_attomoles_ul" = "concentration in Mix 1 (attomoles/ul)") %>%
+  mutate(mix1_attomoles_ul = mix1_attomoles_ul * 0.002) %>% # a 1:500 dilution of mix 1 was added to 100ng total RNA
+  select(ERCC_ID, mix1_attomoles_ul)
+
+ercc_concentrations
+```
+
+# Exploring the ERCC spike in RNAs
+
+- Are they found?
+- Do they increase linearly with the counts?
+- Does the range of counts of the spike ins cover the range of counts of the cell's RNAs?
+
+## plotting ERCC counts of 1 sample (Empty iTOP 24h rep 1)
+
+```{r}
+counts %>%
+  filter(str_detect(Geneid, pattern = "ERCC")) %>%
+  dplyr::select(!Chr:Length) %>%
+  pivot_longer(names_to = "sample", values_to = "counts", Empty1_1440:Untrt3_50) %>%
+  filter(sample == "Empty1_1440") %>%
+  dplyr::rename("ERCC_ID" = "Geneid") %>%
+  left_join(ercc_concentrations) %>%
+  ggplot(aes(x = counts+1, y = mix1_attomoles_ul)) +
+    geom_point() +
+    geom_smooth() +
+    scale_x_log10() +
+    scale_y_log10() +
+    facet_wrap(~sample) +
+    theme_bw(base_size = 8)
+```
+
+ERCCs are found. Relationship between counts and concentration seems ~linear on a log/log scale for ERCCs with ~>10 counts.
+
+## Is the slope comparable for all samples?
+
+```{r}
+#using >10 counts
+counts %>%
+  filter(str_detect(Geneid, pattern = "ERCC")) %>%
+  dplyr::select(!Chr:Length) %>%
+  pivot_longer(names_to = "sample", values_to = "counts", Empty1_1440:Untrt3_50) %>%
+  dplyr::rename("ERCC_ID" = "Geneid") %>%
+  left_join(ercc_concentrations) %>%
+  filter(counts > 10) %>% # trimming of the low count ERCC to only use the linear part > increase R2
+  ggplot(aes(x = counts, y = mix1_attomoles_ul, group = sample)) +
+    geom_point() +
+    stat_poly_line() + # add linear model
+    stat_poly_eq() + # add r2 values
+    scale_x_log10() +
+    scale_y_log10() +
+    facet_wrap(~sample) +
+    theme_bw(base_size = 6)
+```
+
+Samples have similar slope and high correlation between counts and concentration of ERCC RNAs. Empty iTOP 50 minutes rep 3 has relatively low R2 and lower counts.
+
+### Do ERCC counts span the range of endogenous transcripts?
+
+```{r}
+counts %>%
+  mutate(transcript_kind = if_else(str_detect(Geneid, pattern = "ERCC"), "ERCC", "transcripts")) %>%
+  ggplot(aes(x = Untrt1_50+1, y = Untrt2_50+1, color = transcript_kind)) +
+    geom_point(alpha = 0.3) +
+    geom_smooth(method = "lm") +
+    scale_color_d3() +
+    scale_x_log10() +
+    scale_y_log10() +
+    theme_bw()
+```
+
+Yes, ERCC counts span almost entire range of endogenous counts.
+
+# preparing data for DESeq2
+
+## 50 minutes after iTOP
+
+We will exclude the Empty iTOP replicate 3 50 minutes after iTOP sample. This because it had very low yield after library prep, a very high percentage of rRNA mapped reads and is the sample with the lowest R2 between counts of the spike-in RNAs and their supposed concentration. 
+
+Preparing count tables
+```{r}
+#renaming gene id and only include 50 minutes timepoint
+counts %>% 
+  dplyr::select(Geneid, contains("50")) %>%
+  dplyr::rename(gene_id = Geneid) %>%
+  as.data.frame() -> counts_50min
+
+rownames(counts_50min) <- counts_50min$gene_id
+#removing gene id column
+counts_50min <- counts_50min %>%
+  dplyr::select(-gene_id) %>%
+  dplyr::select(-Empty3_50)
+
+counts_50min
+```
+
+```{r}
+exp_design_50min <- read.csv("exp_design_50min.csv", row.names=1, sep = ";")
+
+#making factors
+exp_design_50min$itop  <- as.factor(exp_design_50min$itop)
+exp_design_50min$rnp  <- as.factor(exp_design_50min$rnp)
+exp_design_50min$targeting  <- as.factor(exp_design_50min$targeting)
+
+#setting untrt as first level
+exp_design_50min$itop <- relevel(exp_design_50min$itop, "untrt")
+exp_design_50min$rnp <- relevel(exp_design_50min$rnp, "untrt")
+exp_design_50min$targeting <- relevel(exp_design_50min$targeting, "untrt")
+
+exp_design_50min <- exp_design_50min %>%
+  filter(sampleName != "Empty3_50")
+
+exp_design_50min
+```
+
+## 200 minutes after iTOP
+
+Preparing count tables
+```{r}
+#renaming gene id and only include 50 minutes timepoint
+counts %>% 
+  dplyr::select(Geneid, contains("200")) %>%
+  dplyr::rename(gene_id = Geneid) %>%
+  as.data.frame() -> counts_200min
+
+#adding rownames
+rownames(counts_200min) <- counts_200min$gene_id
+
+#removing gene id column
+counts_200min <- counts_200min %>%
+  dplyr::select(-gene_id)
+
+counts_200min
+```
+
+```{r}
+exp_design_200min <- read.csv("exp_design_200min.csv", row.names=1, sep = ";")
+
+#making factors
+exp_design_200min$itop  <- as.factor(exp_design_200min$itop)
+exp_design_200min$rnp  <- as.factor(exp_design_200min$rnp)
+exp_design_200min$targeting  <- as.factor(exp_design_200min$targeting)
+
+#setting untrt as first level
+exp_design_200min$itop <- relevel(exp_design_200min$itop, "untrt")
+exp_design_200min$rnp <- relevel(exp_design_200min$rnp, "untrt")
+exp_design_200min$targeting <- relevel(exp_design_200min$targeting, "untrt")
+
+exp_design_200min
+```
+
+## 1440 minutes after iTOP
+
+Preparing count tables
+```{r}
+#renaming gene id and only include 50 minutes timepoint
+counts %>% 
+  dplyr::select(Geneid, contains("1440")) %>%
+  dplyr::rename(gene_id = Geneid) %>%
+  as.data.frame() -> counts_1440min
+
+#adding rownames
+rownames(counts_1440min) <- counts_1440min$gene_id
+
+#removing gene id column
+counts_1440min <- counts_1440min %>%
+  dplyr::select(-gene_id)
+
+counts_1440min
+```
+
+```{r}
+exp_design_1440min <- read.csv("exp_design_1440min.csv", row.names=1, sep = ";")
+
+#making factors
+exp_design_1440min$itop  <- as.factor(exp_design_1440min$itop)
+exp_design_1440min$rnp  <- as.factor(exp_design_1440min$rnp)
+exp_design_1440min$targeting  <- as.factor(exp_design_1440min$targeting)
+
+#setting untrt as first level
+exp_design_1440min$itop <- relevel(exp_design_1440min$itop, "untrt")
+exp_design_1440min$rnp <- relevel(exp_design_1440min$rnp, "untrt")
+exp_design_1440min$targeting <- relevel(exp_design_1440min$targeting, "untrt")
+
+exp_design_1440min
+```
+
+# DESeq2 without using ERCC as correction factor
+
+Here we used the default count normalization performed automatically when running DEseq2. Note that some variables are named xx_nocor or uncorrected_xx. This means that ERCC spike-ins were not used for normalization and instead default normalization was used.  
+
+## 50min after iTOP
+
+```{r}
+dds_50min_nocor <- DESeqDataSetFromMatrix(countData = round(counts_50min),
+                                 colData = exp_design_50min,
+                                 design = ~ itop + rnp + targeting)
+```
+
+```{r}
+keep <- rowSums(counts(dds_50min_nocor)) >= 11 #avg of 1 count per condition
+dds_50min_nocor <- dds_50min_nocor[keep,]
+```
+
+```{r}
+dds_50min_nocor <- DESeq(dds_50min_nocor)
+```
+
+```{r}
+resultsNames(dds_50min_nocor)
+```
+
+```{r}
+res_nocor_50min_itop <- results(dds_50min_nocor, name = "itop_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_nocor_50min_rnp <- results(dds_50min_nocor, name = "rnp_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_nocor_50min_targeting <- results(dds_50min_nocor, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+```
+
+itop summary
+```{r}
+summary(res_nocor_50min_itop)
+```
+
+rnp summary
+```{r}
+summary(res_nocor_50min_rnp)
+```
+
+targeting summary
+```{r}
+summary(res_nocor_50min_targeting)
+```
+
+```{r}
+plotMA(res_nocor_50min_itop)
+```
+
+```{r}
+plotMA(res_nocor_50min_rnp)
+```
+
+```{r}
+plotMA(res_nocor_50min_targeting)
+```
+
+building tidy results tables with gene annotation
+```{r}
+res_nocor_50min_itop%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_50min_itop)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 50,
+         variable = "iTOP") -> res_nocor_50min_itop_df
+
+res_nocor_50min_rnp%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_50min_rnp)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 50,
+         variable = "NT_iTOP") -> res_nocor_50min_rnp_df
+
+res_nocor_50min_targeting %>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_50min_targeting)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 50,
+         variable = "Targeting") -> res_nocor_50min_targeting_df
+```
+
+## 200min
+
+```{r}
+dds_200min_nocor <- DESeqDataSetFromMatrix(countData = round(counts_200min),
+                                 colData = exp_design_200min,
+                                 design = ~ itop + rnp + targeting)
+```
+
+```{r}
+keep <- rowSums(counts(dds_200min_nocor)) >= 12 #avg of 1 count per condition
+dds_200min_nocor <- dds_200min_nocor[keep,]
+```
+
+```{r}
+dds_200min_nocor <- DESeq(dds_200min_nocor)
+```
+
+```{r}
+resultsNames(dds_200min_nocor)
+```
+
+```{r}
+res_nocor_200min_itop <- results(dds_200min_nocor, name = "itop_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_nocor_200min_rnp <- results(dds_200min_nocor, name = "rnp_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_nocor_200min_targeting <- results(dds_200min_nocor, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+```
+
+itop summary
+```{r}
+summary(res_nocor_200min_itop)
+```
+
+rnp summary
+```{r}
+summary(res_nocor_200min_rnp)
+```
+
+targeting summary
+```{r}
+summary(res_nocor_200min_targeting)
+```
+
+```{r}
+plotMA(res_nocor_200min_itop)
+```
+
+```{r}
+plotMA(res_nocor_200min_rnp)
+```
+
+```{r}
+plotMA(res_nocor_200min_targeting)
+```
+
+building tidy results tables with gene annotation
+```{r}
+res_nocor_200min_itop%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_200min_itop)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 200,
+         variable = "iTOP") -> res_nocor_200min_itop_df
+
+res_nocor_200min_rnp%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_200min_rnp)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 200,
+         variable = "NT_iTOP") -> res_nocor_200min_rnp_df
+
+res_nocor_200min_targeting %>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_200min_targeting)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 200,
+         variable = "Targeting") -> res_nocor_200min_targeting_df
+```
+
+## 1440min
+
+```{r}
+dds_1440min_nocor <- DESeqDataSetFromMatrix(countData = round(counts_1440min),
+                                 colData = exp_design_1440min,
+                                 design = ~ itop + rnp + targeting)
+```
+
+```{r}
+keep <- rowSums(counts(dds_1440min_nocor)) >= 12 #avg of 1 count per condition
+dds_1440min_nocor <- dds_1440min_nocor[keep,]
+```
+
+```{r}
+dds_1440min_nocor <- DESeq(dds_1440min_nocor)
+```
+
+```{r}
+resultsNames(dds_1440min_nocor)
+```
+
+```{r}
+res_nocor_1440min_itop <- results(dds_1440min_nocor, name = "itop_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_nocor_1440min_rnp <- results(dds_1440min_nocor, name = "rnp_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_nocor_1440min_targeting <- results(dds_1440min_nocor, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+```
+
+itop summary
+```{r}
+summary(res_nocor_1440min_itop)
+```
+
+rnp summary
+```{r}
+summary(res_nocor_1440min_rnp)
+```
+
+targeting summary
+```{r}
+summary(res_nocor_1440min_targeting)
+```
+
+```{r}
+plotMA(res_nocor_1440min_itop)
+```
+
+```{r}
+plotMA(res_nocor_1440min_rnp)
+```
+
+```{r}
+plotMA(res_nocor_1440min_targeting)
+```
+
+```{r}
+res_nocor_1440min_itop%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_1440min_itop)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 1440,
+         variable = "iTOP") -> res_nocor_1440min_itop_df
+
+res_nocor_1440min_rnp%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_1440min_rnp)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 1440,
+         variable = "NT_iTOP") -> res_nocor_1440min_rnp_df
+
+res_nocor_1440min_targeting %>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_nocor_1440min_targeting)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 1440,
+         variable = "Targeting") -> res_nocor_1440min_targeting_df
+```
+
+### save all for supplementary tables
+
+```{r}
+res_nocor_50min_itop_df %>%
+  write_tsv(file = "deseq_default_norm_50min_itop.txt")
+
+res_nocor_50min_rnp_df %>%
+  write_tsv(file = "deseq_default_norm_50min_NT_RNP.txt")
+
+res_nocor_50min_targeting_df %>%
+  write_tsv(file = "deseq_default_norm_50min_targeting.txt")
+
+res_nocor_200min_itop_df %>%
+  write_tsv(file = "deseq_default_norm_200min_itop.txt")
+
+res_nocor_200min_rnp_df %>%
+  write_tsv(file = "deseq_default_norm_200min_NT_RNP.txt")
+
+res_nocor_200min_targeting_df %>%
+  write_tsv(file = "deseq_default_norm_200min_targeting.txt")
+
+res_nocor_1440min_itop_df %>%
+  write_tsv(file = "deseq_default_norm_1440min_itop.txt")
+
+res_nocor_1440min_rnp_df %>%
+  write_tsv(file = "deseq_default_norm_1440min_NT_RNP.txt")
+
+res_nocor_1440min_targeting_df %>%
+  write_tsv(file = "deseq_default_norm_1440min_targeting.txt")
+```
+
+### combine all default corrected for final plot
+
+```{r}
+res_all_nocor_time_separate <- rbind(res_nocor_50min_itop_df, 
+                                     res_nocor_50min_rnp_df, 
+                                     res_nocor_50min_targeting_df,
+                                     res_nocor_200min_itop_df, 
+                                     res_nocor_200min_rnp_df, 
+                                     res_nocor_200min_targeting_df,
+                                     res_nocor_1440min_itop_df, 
+                                     res_nocor_1440min_rnp_df, 
+                                     res_nocor_1440min_targeting_df) %>%
+  mutate(mito_gene = if_else(seqname == "MT", "Mitochondria", "Nucleus"))
+
+#making separate table with just mitochondrial encoded mRNAs
+res_all_nocor_time_separate %>%
+  filter(mito_gene == "Mitochondria" & gene_biotype == "protein_coding") -> res_all_nocor_time_separate_mitochondrial
+```
+
+Making facet labels for plot
+```{r}
+# new facet labels for the timepoints
+timepoint_labels <- c("50 min", "200 min", "1440 min")
+names(timepoint_labels) <- c("50", "200", "1440")
+
+# new facet labels for the variables
+variable_labels <- c("Empty iTOP", "Non-targeting", "Targeting")
+names(variable_labels) <- c("iTOP", "NT_iTOP", "Targeting")
+
+```
+
+```{r}
+res_all_nocor_time_separate %>%
+  filter(gene_biotype == "protein_coding") %>%
+  filter(mito_gene == "Nucleus") %>%
+  ggplot(aes(x = baseMean, y = log2FoldChange)) +
+    geom_hline(yintercept = 0, 
+               lty = "dashed",
+               linewidth = 0.4) +
+    geom_density2d(bins = 8, 
+                   contour_var = "ndensity",
+                   size = 0.2,
+                   aes(color = mito_gene)) +
+    geom_smooth(data =  res_all_nocor_time_separate_mitochondrial, 
+                method = "lm", 
+                aes(color = mito_gene),
+                se = F, 
+                linewidth = 0.4) +
+    geom_smooth(method = "lm", 
+                aes(color = mito_gene),
+                se = F,
+                linewidth = 0.4) +
+    geom_point(data =  res_all_nocor_time_separate_mitochondrial, 
+               aes(color = mito_gene),
+               size = 1,
+               stroke = 0) +
+    scale_color_manual(name = "Gene location", values = c("#2278b5", "black")) +
+    scale_x_log10() +
+    coord_cartesian(ylim = c(-3, 2)) +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(variable),
+               labeller = labeller(timepoint = timepoint_labels, variable = variable_labels)) +
+    theme_bw(base_size = 8) +
+    labs(title = "mRNAs, default library normalization") -> uncorrected_plot
+uncorrected_plot
+```
+
+```{r}
+ggsave(uncorrected_plot,
+       file = "default_corrected_plot_FCoverview.pdf",
+       units = "mm",
+       width = 100, # adjust
+       height = 65) # adjust
+```
+
+
+# DESeq2 ERCC normalized
+
+Here we used the ERCC Spike-in RNAs to normalize the samples. This was done with the estimateSizeFactors() function from the DEseq2 package. 
+
+## 50 minutes timepoint
+
+```{r}
+dds_50min <- DESeqDataSetFromMatrix(countData = round(counts_50min),
+                                 colData = exp_design_50min,
+                                 design = ~ itop + rnp + targeting)
+```
+
+correct size using ERCC Spike in RNAs
+```{r}
+#find rows with ERCC genes.
+counts %>%
+  filter(str_detect(Geneid, pattern = "ERCC")) %>%
+  select(Geneid) %>%
+  as.vector() -> ercc_genes
+ercc_genes <- ercc_genes[[1]]
+
+ercc_genes_logicalvector <- rownames(counts_50min) %in% ercc_genes
+```
+
+```{r}
+dds_50min <- estimateSizeFactors(dds_50min, controlGenes=ercc_genes_logicalvector)
+```
+
+Pre filtering low count genes
+```{r}
+keep <- rowSums(counts(dds_50min)) >= 11 #avg of 1 count per condition
+dds_50min <- dds_50min[keep,]
+```
+
+```{r}
+dds_50min <- DESeq(dds_50min)
+```
+
+```{r}
+resultsNames(dds_50min)
+```
+
+```{r}
+res_50min_itop <- results(dds_50min, name = "itop_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_50min_rnp <- results(dds_50min, name = "rnp_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_50min_targeting <- results(dds_50min, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+```
+
+itop summary
+```{r}
+summary(res_50min_itop)
+```
+
+rnp summary
+```{r}
+summary(res_50min_rnp)
+```
+
+targeting summary
+```{r}
+summary(res_50min_targeting)
+```
+
+```{r}
+plotMA(res_50min_itop)
+```
+
+```{r}
+plotMA(res_50min_rnp)
+```
+
+```{r}
+plotMA(res_50min_targeting)
+```
+
+```{r}
+res_50min_itop%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_50min_itop)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 50,
+         variable = "iTOP") -> res_50min_itop_df
+
+res_50min_rnp%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_50min_rnp)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 50,
+         variable = "NT_iTOP") -> res_50min_rnp_df
+
+res_50min_targeting %>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_50min_targeting)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 50,
+         variable = "Targeting") -> res_50min_targeting_df
+```
+
+## 200 minutes timepoint
+
+```{r}
+dds_200min <- DESeqDataSetFromMatrix(countData = round(counts_200min),
+                                 colData = exp_design_200min,
+                                 design = ~ itop + rnp + targeting)
+```
+
+correct size using ERCC
+
+```{r}
+#find rows with ERCC genes. should be numeric or logical
+counts %>%
+  filter(str_detect(Geneid, pattern = "ERCC")) %>%
+  select(Geneid) %>%
+  as.vector() -> ercc_genes
+ercc_genes <- ercc_genes[[1]]
+
+ercc_genes_logicalvector <- rownames(counts_200min) %in% ercc_genes
+```
+
+```{r}
+dds_200min <- estimateSizeFactors(dds_200min, controlGenes=ercc_genes_logicalvector)
+```
+
+Pre filtering low count genes
+```{r}
+keep <- rowSums(counts(dds_200min)) >= 12 #avg of 1 count per condition
+dds_200min <- dds_200min[keep,]
+```
+
+```{r}
+dds_200min <- DESeq(dds_200min)
+```
+
+```{r}
+resultsNames(dds_200min)
+```
+
+```{r}
+res_200min_itop <- results(dds_200min, name = "itop_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_200min_rnp <- results(dds_200min, name = "rnp_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_200min_targeting <- results(dds_200min, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+```
+
+itop summary
+```{r}
+summary(res_200min_itop)
+```
+
+rnp summary
+```{r}
+summary(res_200min_rnp)
+```
+
+targeting summary
+```{r}
+summary(res_200min_targeting)
+```
+
+```{r}
+plotMA(res_200min_itop)
+```
+
+```{r}
+plotMA(res_200min_rnp)
+```
+
+```{r}
+plotMA(res_200min_targeting)
+```
+
+```{r}
+res_200min_itop%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_200min_itop)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 200,
+         variable = "iTOP") -> res_200min_itop_df
+
+res_200min_rnp%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_200min_rnp)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 200,
+         variable = "NT_iTOP") -> res_200min_rnp_df
+
+res_200min_targeting %>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_200min_targeting)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 200,
+         variable = "Targeting") -> res_200min_targeting_df
+```
+
+## 1440 minutes timepoint
+
+```{r}
+dds_1440min <- DESeqDataSetFromMatrix(countData = round(counts_1440min),
+                                 colData = exp_design_1440min,
+                                 design = ~ itop + rnp + targeting)
+```
+
+correct size using ERCC
+
+```{r}
+#find rows with ERCC genes. should be numeric or logical
+counts %>%
+  filter(str_detect(Geneid, pattern = "ERCC")) %>%
+  select(Geneid) %>%
+  as.vector() -> ercc_genes
+ercc_genes <- ercc_genes[[1]]
+
+ercc_genes_logicalvector <- rownames(counts_1440min) %in% ercc_genes
+```
+
+```{r}
+dds_1440min <- estimateSizeFactors(dds_1440min, controlGenes=ercc_genes_logicalvector)
+```
+
+Pre filtering low count genes
+```{r}
+keep <- rowSums(counts(dds_1440min)) >= 12 #avg of 1 count per condition
+dds_1440min <- dds_1440min[keep,]
+```
+
+```{r}
+dds_1440min <- DESeq(dds_1440min)
+```
+
+```{r}
+resultsNames(dds_1440min)
+```
+
+```{r}
+res_1440min_itop <- results(dds_1440min, name = "itop_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_1440min_rnp <- results(dds_1440min, name = "rnp_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+res_1440min_targeting <- results(dds_1440min, name = "targeting_trt_vs_untrt", alpha = 0.05, lfcThreshold = 1)
+```
+
+itop summary
+```{r}
+summary(res_1440min_itop)
+```
+
+rnp summary
+```{r}
+summary(res_1440min_rnp)
+```
+
+targeting summary
+```{r}
+summary(res_1440min_targeting)
+```
+
+```{r}
+plotMA(res_1440min_itop)
+```
+
+```{r}
+plotMA(res_1440min_rnp)
+```
+
+```{r}
+plotMA(res_1440min_targeting)
+```
+
+```{r}
+res_1440min_itop%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_1440min_itop)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 1440,
+         variable = "iTOP") -> res_1440min_itop_df
+
+res_1440min_rnp%>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_1440min_rnp)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 1440,
+         variable = "NT_iTOP") -> res_1440min_rnp_df
+
+res_1440min_targeting %>%
+  as.data.frame() %>%
+  dplyr::mutate(gene_id = rownames(res_1440min_targeting)) %>%
+  left_join(gene_annot) %>% 
+  mutate(timepoint = 1440,
+         variable = "Targeting") -> res_1440min_targeting_df
+```
+
+## combine all ERCC spike-in corrected fold changes for plot
+
+```{r}
+res_all_time_separate <- rbind(res_50min_itop_df, 
+                                     res_50min_rnp_df, 
+                                     res_50min_targeting_df,
+                                     res_200min_itop_df, 
+                                     res_200min_rnp_df, 
+                                     res_200min_targeting_df,
+                                     res_1440min_itop_df, 
+                                     res_1440min_rnp_df, 
+                                     res_1440min_targeting_df) %>%
+  mutate(mito_gene = if_else(seqname == "MT", "Mitochondria", "Nucleus"))
+
+#make separate table for mitochonrialy encoded mRNAs
+res_all_time_separate %>%
+  filter(mito_gene == "Mitochondria" & gene_biotype == "protein_coding") -> res_all_time_separate_mitochondrial
+```
+
+Making facet labels for plot
+```{r}
+# new facet labels for the timepoints
+timepoint_labels <- c("50 min", "200 min", "1440 min")
+names(timepoint_labels) <- c("50", "200", "1440")
+
+# new facet labels for the variables
+variable_labels <- c("Empty iTOP", "Non-targeting", "Targeting")
+names(variable_labels) <- c("iTOP", "NT_iTOP", "Targeting")
+```
+
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "protein_coding") %>%
+  filter(mito_gene == "Nucleus") %>%
+  ggplot(aes(x = baseMean, y = log2FoldChange)) +
+    geom_hline(yintercept = 0, 
+               lty = "dashed",
+               linewidth = 0.4) +
+    #geom_abline(data = lm_pc_deseq_ercc, aes(intercept = intercept+1, slope = slope)) +
+    geom_density2d(bins = 8, 
+                   contour_var = "ndensity",
+                   size = 0.2,
+                   aes(color = mito_gene)) +
+    geom_smooth(data =  res_all_time_separate_mitochondrial, 
+                method = "lm", 
+                aes(color = mito_gene),
+                se = F, 
+                linewidth = 0.4) +
+    geom_smooth(method = "lm", 
+                aes(color = mito_gene),
+                se = F,
+                linewidth = 0.4) +
+    geom_point(data =  res_all_time_separate_mitochondrial, 
+               aes(color = mito_gene),
+               size = 1,
+               stroke = 0) +
+    scale_color_manual(name = "Gene location", values = c("#2278b5", "black")) +
+    scale_x_log10() +
+    coord_cartesian(ylim = c(-3, 2)) +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(variable),
+               labeller = labeller(timepoint = timepoint_labels, variable = variable_labels)) +
+    theme_bw(base_size = 8) +
+    labs() -> ERCC_corrected_plot
+ERCC_corrected_plot
+```
+
+```{r}
+ggsave(ERCC_corrected_plot,
+       file = "ERCC_corrected_plot_FCoverview.pdf",
+       units = "mm",
+       width = 140, 
+       height = 68) 
+```
+
+what are the median and mean log2FC values?
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "protein_coding") %>%
+  filter(mito_gene == "Nucleus") %>%
+  group_by(timepoint, variable) %>%
+  summarise(median_FC = median(log2FoldChange),
+            mean_FC = mean(log2FoldChange)) %>%
+  arrange(variable)
+```
+
+# plotting fold changes of other biotypes
+
+```{r}
+library(ggrepel)
+```
+
+##lncRNAs
+
+make separate dataframe for malat1 for ggrepel
+```{r}
+res_all_time_separate %>%
+  filter(gene_name %in% c("MALAT1")) -> malat_only
+```
+
+
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "lncRNA") %>%
+  ggplot(aes(x = baseMean, y = log2FoldChange)) +
+    geom_hline(yintercept = 0, lty = "dashed") +
+    geom_pointdensity(stroke = 0, size = 1) +
+    geom_text_repel(data = malat_only, aes(label = gene_name),
+                    size = 2,
+                    nudge_y = 3.5,
+                    nudge_x = 2,
+                    box.padding = 0.5,
+                    min.segment.length = 0) +
+    scale_color_viridis(option = "turbo", name = "Density") +
+    scale_x_log10() +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(variable),
+               labeller = labeller(timepoint = timepoint_labels, variable = variable_labels)) +
+    theme_bw(base_size = 8) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = "lncRNA") -> lncRNA_FC_plot
+lncRNA_FC_plot
+```
+
+```{r}
+ggsave(lncRNA_FC_plot,
+       file = "lncRNA_FC_plot.jpg",
+       units = "mm",
+       width = 100, # adjust
+       height = 70) # adjust
+```
+
+###misc_RNAs
+
+make separate dataframe for RN7SL1
+```{r}
+res_all_time_separate %>%
+  filter(gene_name %in% c("RN7SL1")) -> RN7SL1_only
+```
+
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "misc_RNA") %>%
+  ggplot(aes(x = baseMean, y = log2FoldChange)) +
+    geom_hline(yintercept = 0, lty = "dashed") +
+    geom_pointdensity(stroke = 0, size = 1) +
+    geom_text_repel(data = RN7SL1_only, aes(label = gene_name),
+                    size = 2,
+                    nudge_y = -3,
+                    nudge_x = 2,
+                    box.padding = 0.5,
+                    min.segment.length = 0) +
+    scale_color_viridis(option = "turbo", name = "Density") +
+    scale_x_log10() +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(variable),
+               labeller = labeller(timepoint = timepoint_labels, variable = variable_labels)) +
+    theme_bw(base_size = 8) +
+    labs(title = "misc_RNA") -> misc_RNA_FC_plot
+misc_RNA_FC_plot
+```
+
+```{r}
+ggsave(misc_RNA_FC_plot,
+       file = "misc_RNA_FC_plot.jpg",
+       units = "mm",
+       width = 100, # adjust
+       height = 70) # adjust
+```
+
+###snRNA
+
+make separate dataframe for RN7SK
+```{r}
+res_all_time_separate %>%
+  filter(gene_name %in% c("RN7SK")) -> RN7SK_only
+```
+
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "snRNA") %>%
+  ggplot(aes(x = baseMean, y = log2FoldChange)) +
+    geom_hline(yintercept = 0, lty = "dashed") +
+    geom_pointdensity(stroke = 0, size = 1) +
+    geom_text_repel(data = RN7SK_only, aes(label = gene_name),
+                    size = 2,
+                    nudge_y = -3,
+                    nudge_x = 2,
+                    box.padding = 0.5,
+                    min.segment.length = 0) +
+    scale_color_viridis(option = "turbo", name = "Density") +
+    scale_x_log10() +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(variable),
+               labeller = labeller(timepoint = timepoint_labels, variable = variable_labels)) +
+    theme_bw(base_size = 8) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = "snRNA") -> snRNA_FC_plot
+snRNA_FC_plot
+```
+
+```{r}
+ggsave(snRNA_FC_plot,
+       file = "snRNA_FC_plot.jpg",
+       units = "mm",
+       width = 100, # adjust
+       height = 70) # adjust
+```
+
+###snoRNA
+
+make separate dataframe for SNORD3A
+```{r}
+res_all_time_separate %>%
+  filter(gene_name %in% c("SNORD3A")) -> SNORD3A_only
+```
+
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "snoRNA") %>%
+  ggplot(aes(x = baseMean, y = log2FoldChange)) +
+    geom_hline(yintercept = 0, lty = "dashed") +
+    geom_pointdensity(stroke = 0, size = 1) +
+    geom_text_repel(data = SNORD3A_only, aes(label = gene_name),
+                    size = 2,
+                    nudge_y = -3,
+                    nudge_x = 2,
+                    box.padding = 0.5,
+                    min.segment.length = 0) +
+    scale_color_viridis(option = "turbo", name = "Density") +
+    scale_x_log10() +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(variable),
+               labeller = labeller(timepoint = timepoint_labels, variable = variable_labels)) +
+    theme_bw(base_size = 8) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = "snoRNA") -> snoRNA_FC_plot
+snoRNA_FC_plot
+```
+
+```{r}
+ggsave(snoRNA_FC_plot,
+       file = "snoRNA_FC_plot.jpg",
+       units = "mm",
+       width = 100, # adjust
+       height = 70) # adjust
+```
+
+# differential gene expression analysis
+
+## protein coding transcripts
+
+For the protein coding transcripts the assumption of DESeq2 that most genes have a log2 fold change of 0 is clearly violated in the targeting condition. Collateral RNA cleavage by LbuCas13a seems to have caused a global loss of cytoplasmic mRNAs. Furthermore, it seems that there is a negative correlation between the mRNA expression level and the log2 fold change. So, the found log2FoldChange values are the result of a combination of transcript loss due to collateral RNA cleavage by LbuCas13a and potentially up or down regulation in response to the treatment. To find genes that are potentially up or downregulated in response to the collateral cleavage, or more resistant or sensitive to collateral cleavage, we corrected for the loss due to collateral RNA cleavage by making a linear model of the relationship between the baseMean and log2FoldChange values and subtracting this linear model from the log2FoldChange values. Now Log2FoldChange values are centered around 0. 
+
+First make linear models
+```{r}
+res_all_time_separate %>%
+  filter(gene_biotype == "protein_coding") %>%
+  mutate(log_basemean = log10(baseMean)) %>%
+  group_by(variable, timepoint) %>%
+  group_modify(~ broom::tidy(lm(log2FoldChange ~ log_basemean, data = .x))) %>%
+  dplyr::select(variable, timepoint, term, estimate) %>%
+  pivot_wider(names_from = term, values_from = estimate) %>%
+  dplyr::rename("intercept" = "(Intercept)",
+         "slope" = "log_basemean") -> lm_pc_deseq_ercc
+lm_pc_deseq_ercc
+```
+
+Subtract linear model from log2FC values
+
+```{r}
+res_all_time_separate %>%
+  mutate(log_basemean = log10(baseMean)) %>%
+  left_join(lm_pc_deseq_ercc) %>%
+  mutate(expected_log2FC = log_basemean * slope + intercept,
+         substracted_log2FC = log2FoldChange - expected_log2FC) -> res_all_time_separate_substracted
+```
+
+Explore plots
+```{r}
+#50 min
+res_all_time_separate_substracted %>%
+  filter(gene_biotype == "protein_coding" & timepoint == 50 & variable == "Targeting") %>%
+  ggplot(aes(x = log_basemean, y = substracted_log2FC)) +
+    geom_pointdensity() +
+    geom_hline(yintercept = c(-1, 1)) + #
+    geom_vline(xintercept = 1) #noise too big below 10 counts
+```
+
+```{r}
+#200 min
+res_all_time_separate_substracted %>%
+  filter(gene_biotype == "protein_coding" & timepoint == 200 & variable == "Targeting") %>%
+  ggplot(aes(x = log_basemean, y = substracted_log2FC)) +
+    geom_pointdensity() +
+    geom_hline(yintercept = c(-2, 2)) + #
+    geom_vline(xintercept = 1) #noise too big below 10 counts
+```
+
+```{r}
+#1440 min
+res_all_time_separate_substracted %>%
+  filter(gene_biotype == "protein_coding" & timepoint == 1440 & variable == "Targeting") %>%
+  ggplot(aes(x = log_basemean, y = substracted_log2FC)) +
+    geom_pointdensity() +
+    geom_hline(yintercept = c(-2, 2)) + #
+    geom_vline(xintercept = 1) #noise too big below 10 counts
+```
+
+Saving tables for supplementary data
+```{r}
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 50) %>%
+  dplyr::filter(variable == "iTOP") %>%
+  write_tsv(file = "deseq_ERCC_norm_50min_itop.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 50) %>%
+  dplyr::filter(variable == "NT_iTOP") %>%
+  write_tsv(file = "deseq_ERCC_norm_50min_NT_RNP.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 50) %>%
+  dplyr::filter(variable == "Targeting") %>%
+  write_tsv(file = "deseq_ERCC_norm_50min_targeting.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 200) %>%
+  dplyr::filter(variable == "iTOP") %>%
+  write_tsv(file = "deseq_ERCC_norm_200min_itop.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 200) %>%
+  dplyr::filter(variable == "NT_iTOP") %>%
+  write_tsv(file = "deseq_ERCC_norm_200min_NT_RNP.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 200) %>%
+  dplyr::filter(variable == "Targeting") %>%
+  write_tsv(file = "deseq_ERCC_norm_200min_targeting.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 1440) %>%
+  dplyr::filter(variable == "iTOP") %>%
+  write_tsv(file = "deseq_ERCC_norm_1440min_itop.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 1440) %>%
+  dplyr::filter(variable == "NT_iTOP") %>%
+  write_tsv(file = "deseq_ERCC_norm_1440min_NT_RNP.txt")
+
+res_all_time_separate_substracted %>%
+  dplyr::select(-mito_gene) %>%
+  dplyr::filter(timepoint == 1440) %>%
+  dplyr::filter(variable == "Targeting") %>%
+  write_tsv(file = "deseq_ERCC_norm_1440min_targeting.txt")
+```
+
+Saving table of genes selected for functional enrichment analysis
+```{r}
+res_all_time_separate_substracted %>%
+  filter(timepoint == 50 & variable == "Targeting") %>%
+  filter(log_basemean > 1) %>%
+  filter(abs(substracted_log2FC) > 1 & gene_biotype == "protein_coding" | (gene_biotype != "protein_coding" & abs(log2FoldChange) > 1 & padj < 0.05)) %>%
+  mutate(when_DEG = 50) -> DEG_T50
+DEG_T50
+
+res_all_time_separate_substracted %>%
+  filter(timepoint == 200 & variable == "Targeting") %>%
+  filter(log_basemean > 1) %>%
+  filter(abs(substracted_log2FC) > 2 & gene_biotype == "protein_coding" | (gene_biotype != "protein_coding" & abs(log2FoldChange) > 2 & padj < 0.05)) %>%
+  mutate(when_DEG = 200) -> DEG_T200
+DEG_T200
+
+res_all_time_separate_substracted %>%
+  filter(timepoint == 1440 & variable == "Targeting") %>%
+  filter(log_basemean > 1) %>%
+  filter(abs(substracted_log2FC) > 2 & gene_biotype == "protein_coding" | (gene_biotype != "protein_coding" & abs(log2FoldChange) > 2 & padj < 0.05)) %>%
+  mutate(when_DEG = 1440)  -> DEG_T1440
+DEG_T1440
+
+rbind(DEG_T50, DEG_T200, DEG_T1440) %>%
+  mutate(direction = if_else(gene_biotype == "protein_coding",
+                             if_else(substracted_log2FC < 0, "down", "up"),
+                             if_else(log2FoldChange < 0, "down", "up"))) %>%
+  arrange(when_DEG, direction) %>%
+  write_tsv(file = "DEGs_all.txt")
+```
+
+
+
