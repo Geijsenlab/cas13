@@ -1,0 +1,1774 @@
+---
+title: "figures"
+output: html_document
+date: '2022-05-16'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggpubr)
+library(ggsci)
+library(ShortRead)
+```
+
+# importing raw reads
+
+## rep 1
+
+```{r fastq import rep1, cache = TRUE}
+reads_nb1_r1 <- readFastq("BOT6354/trimmed_reads/BC01_trimmed.fastq")
+reads_nb2_r1 <- readFastq("BOT6354/trimmed_reads/BC02_trimmed.fastq")
+reads_nb3_r1 <- readFastq("BOT6354/trimmed_reads/BC03_trimmed.fastq")
+reads_nb4_r1 <- readFastq("BOT6354/trimmed_reads/BC04_trimmed.fastq")
+reads_nb5_r1 <- readFastq("BOT6354/trimmed_reads/BC05_trimmed.fastq")
+reads_nb6_r1 <- readFastq("BOT6354/trimmed_reads/BC06_trimmed.fastq")
+reads_nb7_r1 <- readFastq("BOT6354/trimmed_reads/BC07_trimmed.fastq")
+reads_nb8_r1 <- readFastq("BOT6354/trimmed_reads/BC08_trimmed.fastq")
+reads_nb9_r1 <- readFastq("BOT6354/trimmed_reads/BC09_trimmed.fastq")
+reads_nb10_r1 <- readFastq("BOT6354/trimmed_reads/BC10_trimmed.fastq")
+reads_nb11_r1 <- readFastq("BOT6354/trimmed_reads/BC11_trimmed.fastq")
+reads_nb12_r1 <- readFastq("BOT6354/trimmed_reads/BC12_trimmed.fastq")
+reads_nb13_r1 <- readFastq("BOT6354/trimmed_reads/BC13_trimmed.fastq")
+reads_nb14_r1 <- readFastq("BOT6354/trimmed_reads/BC14_trimmed.fastq")
+reads_nb15_r1 <- readFastq("BOT6354/trimmed_reads/BC15_trimmed.fastq")
+reads_nb16_r1 <- readFastq("BOT6354/trimmed_reads/BC16_trimmed.fastq")
+```
+
+```{r tidy fastq length, cache=TRUE}
+just_reads1_r1 <- reads_nb1_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "no_transduction",
+         rep = 1)
+
+just_reads2_r1 <- reads_nb2_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "empty_transduction",
+         rep = 1)
+
+just_reads3_r1 <- reads_nb3_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "non_targeting",
+         rep = 1)
+
+just_reads4_r1 <- reads_nb4_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+just_reads5_r1 <- reads_nb5_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "empty_transduction",
+         rep = 1)
+
+just_reads6_r1 <- reads_nb6_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "non_targeting",
+         rep = 1)
+
+just_reads7_r1 <- reads_nb7_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+just_reads8_r1 <- reads_nb8_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "empty_transduction",
+         rep = 1)
+
+just_reads9_r1 <- reads_nb9_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "non_targeting",
+         rep = 1)
+
+just_reads10_r1 <- reads_nb10_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+just_reads11_r1 <- reads_nb11_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "empty_transduction",
+         rep = 1)
+
+just_reads12_r1 <- reads_nb12_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "non_targeting",
+         rep = 1)
+
+just_reads13_r1 <- reads_nb13_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+just_reads14_r1 <- reads_nb14_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "empty_transduction",
+         rep = 1)
+
+just_reads15_r1 <- reads_nb15_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "non_targeting",
+         rep = 1)
+
+just_reads16_r1 <- reads_nb16_r1 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+all_fastq_r1 <- rbind(just_reads1_r1, just_reads2_r1, just_reads3_r1, just_reads4_r1, just_reads5_r1, 
+                      just_reads6_r1, just_reads7_r1, just_reads8_r1, just_reads9_r1, just_reads10_r1, 
+                      just_reads11_r1, just_reads12_r1, just_reads13_r1, just_reads14_r1, just_reads15_r1, just_reads16_r1)
+```
+
+```{r}
+#number of reads per barcode
+r1_numreads <- all_fastq_r1 %>%
+  group_by(treatment, timepoint) %>%
+  summarise(fastq_num_reads = n()) %>%
+  mutate(rep = 1) #%>%
+  ggplot(aes(x = as.factor(timepoint), y = n, fill = treatment)) +
+    geom_col(position = "dodge")
+```
+
+```{r}
+rm(reads_nb1_r1, reads_nb2_r1,reads_nb3_r1,reads_nb4_r1,reads_nb5_r1,reads_nb6_r1,reads_nb7_r1,reads_nb8_r1,reads_nb9_r1,reads_nb10_r1,reads_nb11_r1,reads_nb12_r1,reads_nb13_r1,reads_nb14_r1,reads_nb15_r1,reads_nb16_r1)
+```
+
+## rep 2
+```{r fastq import rep2, cache = TRUE}
+reads_nb1_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode01_all_t.fastq")
+reads_nb2_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode02_all_t.fastq")
+reads_nb3_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode03_all_t.fastq")
+reads_nb4_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode04_all_t.fastq")
+reads_nb5_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode05_all_t.fastq")
+reads_nb6_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode06_all_t.fastq")
+reads_nb7_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode07_all_t.fastq")
+reads_nb8_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode08_all_t.fastq")
+reads_nb9_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode09_all_t.fastq")
+reads_nb10_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode10_all_t.fastq")
+reads_nb11_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode11_all_t.fastq")
+reads_nb12_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode12_all_t.fastq")
+reads_nb13_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode13_all_t.fastq")
+reads_nb14_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode14_all_t.fastq")
+reads_nb15_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode15_all_t.fastq")
+reads_nb16_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode16_all_t.fastq")
+reads_nb22_r2 <- readFastq("nanopore_april_2022/fastq_pass/barcode22_all_t.fastq")
+```
+
+```{r tidy fastq length r2, cache=TRUE}
+just_reads1_r2 <- reads_nb1_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "no_transduction",
+         rep = 2)
+
+just_reads2_r2 <- reads_nb2_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "empty_transduction",
+         rep = 2)
+
+just_reads3_r2 <- reads_nb3_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "non_targeting",
+         rep = 2)
+
+just_reads4_r2 <- reads_nb4_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+just_reads5_r2 <- reads_nb5_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+just_reads6_r2 <- reads_nb6_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "empty_transduction",
+         rep = 2)
+
+just_reads7_r2 <- reads_nb7_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "non_targeting",
+         rep = 2)
+
+just_reads8_r2 <- reads_nb8_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+just_reads9_r2 <- reads_nb9_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "empty_transduction",
+         rep = 2)
+
+just_reads10_r2 <- reads_nb10_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "non_targeting",
+         rep = 2)
+
+just_reads11_r2 <- reads_nb11_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+just_reads12_r2 <- reads_nb12_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "empty_transduction",
+         rep = 2)
+
+just_reads13_r2 <- reads_nb13_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "non_targeting",
+         rep = 2)
+
+just_reads14_r2 <- reads_nb14_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+just_reads15_r2 <- reads_nb15_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "empty_transduction",
+         rep = 2)
+
+just_reads16_r2 <- reads_nb16_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "non_targeting",
+         rep = 2)
+
+just_reads22_r2 <- reads_nb22_r2 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+all_fastq_r2 <- rbind(just_reads1_r2, just_reads2_r2, just_reads3_r2, just_reads4_r2, 
+                      just_reads5_r2, just_reads6_r2, just_reads7_r2, just_reads8_r2, 
+                      just_reads9_r2, just_reads10_r2, just_reads11_r2, just_reads12_r2, 
+                      just_reads13_r2, just_reads14_r2, just_reads15_r2, just_reads16_r2, just_reads22_r2)
+```
+
+```{r}
+rm(reads_nb1_r2, reads_nb2_r2,reads_nb3_r2,reads_nb4_r2,reads_nb5_r2,reads_nb6_r2,reads_nb7_r2,reads_nb8_r2,reads_nb9_r2,reads_nb10_r2,reads_nb11_r2,reads_nb12_r2,reads_nb13_r2,reads_nb14_r2,reads_nb15_r2,reads_nb16_r2, reads_nb22_r2)
+```
+
+```{r}
+#number of reads per barcode
+r2_numreads <- all_fastq_r2 %>%
+  group_by(treatment, timepoint) %>%
+  summarise(fastq_num_reads = n()) %>%
+  mutate(rep = 2) #%>%
+  ggplot(aes(x = as.factor(timepoint), y = n, fill = treatment)) +
+    geom_col(position = "dodge") +
+    scale_y_continuous(labels = scales::comma)
+```
+
+## rep 3
+
+```{r fastq import rep1, cache = TRUE}
+reads_nb1_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode01_all_t.fastq")
+reads_nb2_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode02_all_t.fastq")
+reads_nb3_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode03_all_t.fastq")
+reads_nb4_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode04_all_t.fastq")
+reads_nb5_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode05_all_t.fastq")
+reads_nb6_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode06_all_t.fastq")
+reads_nb7_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode07_all_t.fastq")
+reads_nb8_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode08_all_t.fastq")
+reads_nb9_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode09_all_t.fastq")
+reads_nb10_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode10_all_t.fastq")
+reads_nb11_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode11_all_t.fastq")
+reads_nb12_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode12_all_t.fastq")
+reads_nb13_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode13_all_t.fastq")
+reads_nb14_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode14_all_t.fastq")
+reads_nb15_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode15_all_t.fastq")
+reads_nb16_r3 <- readFastq("20250701_nanopore_r3_revision/fastq_pass/barcode16_all_t.fastq")
+```
+
+```{r tidy fastq length, cache=TRUE}
+just_reads1_r3 <- reads_nb1_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "no_transduction",
+         rep = 3)
+
+just_reads2_r3 <- reads_nb2_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "empty_transduction",
+         rep = 3)
+
+just_reads3_r3 <- reads_nb3_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "non_targeting",
+         rep = 3)
+
+just_reads4_r3 <- reads_nb4_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+just_reads5_r3 <- reads_nb5_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "empty_transduction",
+         rep = 3)
+
+just_reads6_r3 <- reads_nb6_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "non_targeting",
+         rep = 3)
+
+just_reads7_r3 <- reads_nb7_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 50,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+just_reads8_r3 <- reads_nb8_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "empty_transduction",
+         rep = 3)
+
+just_reads9_r3 <- reads_nb9_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "non_targeting",
+         rep = 3)
+
+just_reads10_r3 <- reads_nb10_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 200,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+just_reads11_r3 <- reads_nb11_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "empty_transduction",
+         rep = 3)
+
+just_reads12_r3 <- reads_nb12_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "non_targeting",
+         rep = 3)
+
+just_reads13_r3 <- reads_nb13_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 500,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+just_reads14_r3 <- reads_nb14_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "empty_transduction",
+         rep = 3)
+
+just_reads15_r3 <- reads_nb15_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "non_targeting",
+         rep = 3)
+
+just_reads16_r3 <- reads_nb16_r3 %>%
+  sread() %>%
+  width() %>%
+  as.data.frame() %>%
+  dplyr::rename("width" = ".") %>%
+  mutate(timepoint = 1440,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+all_fastq_r3 <- rbind(just_reads1_r3, just_reads2_r3, just_reads3_r3, just_reads4_r3, just_reads5_r3, 
+                      just_reads6_r3, just_reads7_r3, just_reads8_r3, just_reads9_r3, just_reads10_r3, 
+                      just_reads11_r3, just_reads12_r3, just_reads13_r3, just_reads14_r3, just_reads15_r3, just_reads16_r3)
+```
+
+```{r}
+#number of reads per barcode
+r3_numreads <- all_fastq_r3 %>%
+  group_by(treatment, timepoint) %>%
+  summarise(fastq_num_reads = n()) %>%
+  mutate(rep = 3) #%>%
+  ggplot(aes(x = as.factor(timepoint), y = n, fill = treatment)) +
+    geom_col(position = "dodge")
+```
+
+```{r}
+rm(reads_nb1_r3, reads_nb2_r3,reads_nb3_r3,reads_nb4_r3,reads_nb5_r3,reads_nb6_r3,reads_nb7_r3,reads_nb8_r3,reads_nb9_r3,reads_nb10_r3,reads_nb11_r3,reads_nb12_r3,reads_nb13_r3,reads_nb14_r3,reads_nb15_r3,reads_nb16_r3)
+```
+
+## merge all
+
+```{r}
+all_fastq <- rbind(all_fastq_r1, all_fastq_r2, all_fastq_r3)
+```
+
+```{r}
+all_fastq$treatment <- factor(all_fastq$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+```
+
+## read length plot rolling average, library size corrected
+
+```{r}
+#rolling avg
+library(zoo)
+```
+
+```{r}
+lib_size <- all_fastq %>%
+  group_by(treatment, timepoint, rep) %>%
+  summarise(lib_size = n())
+
+mean_lib_size <- mean(lib_size$lib_size)
+```
+
+```{r}
+new_collabs <- c("0 min", "50 min", "200 min", "500 min", "1440 min")
+names(new_collabs) <- c(0, 50, 200, 500, 1440)
+
+new_rowlabs <- c("Replicate 1", "Replicate 2", "Replicate 3")
+names(new_rowlabs) <- c(1, 2, 3)
+```
+
+```{r}
+read_length_plot <- all_fastq %>%
+  group_by(treatment, timepoint, rep, width) %>%
+  summarise(length_count = n()) %>%
+  mutate(total_mb = length_count * width / 1000000) %>%
+  left_join(lib_size) %>%
+  mutate(cor_mb = total_mb / lib_size * mean_lib_size,
+         cov_05da = zoo::rollmean(cor_mb, k = 20, fill = NA)) %>%
+  filter(width < 8000 & width > 20) %>%
+  ggplot(aes(x = width, y = cov_05da, color = treatment)) +
+    geom_line() +
+    scale_color_jco(#labels = c("No transduction", "Empty transduction", "Non targeting", "Targeting GFP")
+      ) +
+    scale_y_log10() +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(timepoint = new_collabs,
+                                   rep = new_rowlabs)) +
+    theme_pubr(base_size = 8) +
+    theme(panel.grid.minor = element_blank(),
+          strip.text = element_text(size = 8),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top",
+          panel.grid.major.x = element_blank())+
+    labs(x = "Read length",
+         y = "Library size corrected abundance",
+         color = "Treatment")
+read_length_plot
+```
+
+```{r}
+ggsave(
+  filename = "read_length_plot_3reps.pdf",
+  plot = read_length_plot,
+  width = 173,
+  height = 85,
+  units = "mm"
+)
+getwd()
+```
+
+# importing aligned reads
+
+## import ensemble reference
+
+```{r import reference info}
+#importing reference
+ref_cdna_ncrna <- readFasta("Homo_sapiens.GRCh38.cdna.all.ncrna.gfp.rrna.fa")
+
+#extracting reference info
+ref_meta <- ref_cdna_ncrna %>%
+  ShortRead::id() %>%
+  as.data.frame() %>%
+  separate(col = x, sep = " ", into = c("enst", "db", "chromosome", "gene", "gene_biotype", "transcript_biotype", "gene_symbol", "description"), extra = "merge")
+
+#clean reference info
+ref_meta <- ref_meta %>%
+  mutate(chromosome = str_remove(chromosome, pattern = "^\\w*\\:"),
+         gene = str_remove(gene, pattern = "^\\w*\\:"),
+         gene_biotype = str_remove(gene_biotype, pattern = "^\\w*\\:"),
+         transcript_biotype = str_remove(transcript_biotype, pattern = "^\\w*\\:"),
+         gene_symbol = str_remove(gene_symbol, pattern = "^\\w*\\:"),
+         description = str_remove(description, pattern = "^\\w*\\:"))%>%
+  separate(chromosome, into = c("build", "chromosome", "start", "end", "strand"), sep = ":")
+```
+
+## import rep 1
+
+```{r import paf files}
+#importing and merging paf files
+paf_bc1_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC01_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "no_transduction",
+         rep = 1)
+
+paf_bc2_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC02_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "empty_transduction",
+         rep = 1)
+
+paf_bc3_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC03_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "non_targeting",
+         rep = 1)
+
+paf_bc4_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC04_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+paf_bc5_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC05_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "empty_transduction",
+         rep = 1)
+
+paf_bc6_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC06_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "non_targeting",
+         rep = 1)
+
+paf_bc7_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC07_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+paf_bc8_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC08_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "empty_transduction",
+         rep = 1)
+
+paf_bc9_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC09_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "non_targeting",
+         rep = 1)
+
+paf_bc10_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC10_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+paf_bc11_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC11_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "empty_transduction",
+         rep = 1)
+
+paf_bc12_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC12_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "non_targeting",
+         rep = 1)
+
+paf_bc13_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC13_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+paf_bc14_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC14_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "empty_transduction",
+         rep = 1)
+
+paf_bc15_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC15_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "non_targeting",
+         rep = 1)
+
+paf_bc16_r1 <- read_tsv("BOT6354/aligned_reads/transcriptome_aligned/rrna_inref/BC16_tt2.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "targeting_sp2",
+         rep = 1)
+
+all_paf_r1 <- rbind(paf_bc1_r1, paf_bc2_r1, paf_bc3_r1, paf_bc4_r1, paf_bc5_r1, 
+                 paf_bc6_r1, paf_bc7_r1, paf_bc8_r1, paf_bc9_r1, paf_bc10_r1, 
+                 paf_bc11_r1, paf_bc12_r1, paf_bc13_r1, paf_bc14_r1, paf_bc15_r1, paf_bc16_r1)
+
+remove(paf_bc1_r1, paf_bc2_r1, paf_bc3_r1, paf_bc4_r1, paf_bc5_r1, 
+                 paf_bc6_r1, paf_bc7_r1, paf_bc8_r1, paf_bc9_r1, paf_bc10_r1, 
+                 paf_bc11_r1, paf_bc12_r1, paf_bc13_r1, paf_bc14_r1, paf_bc15_r1, paf_bc16_r1)
+
+all_paf_r1$timepoint <- as.double(all_paf_r1$timepoint)
+```
+
+## import rep 2
+
+```{r import paf files}
+#importing and merging paf files
+paf_bc1_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc01_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "no_transduction",
+         rep = 2)
+
+paf_bc2_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc02_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "empty_transduction",
+         rep = 2)
+
+paf_bc3_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc03_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "non_targeting",
+         rep = 2)
+
+paf_bc4_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc04_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+paf_bc5_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc05_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+paf_bc6_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc06_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "empty_transduction",
+         rep = 2)
+
+paf_bc7_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc07_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "non_targeting",
+         rep = 2)
+
+paf_bc8_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc08_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+paf_bc9_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc09_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "empty_transduction",
+         rep = 2)
+
+paf_bc10_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc10_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "non_targeting",
+         rep = 2)
+
+paf_bc11_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc11_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+paf_bc12_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc12_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "empty_transduction",
+         rep = 2)
+
+paf_bc13_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc13_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "non_targeting",
+         rep = 2)
+
+paf_bc14_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc14_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+paf_bc15_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc15_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "empty_transduction",
+         rep = 2)
+
+paf_bc16_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc16_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "non_targeting",
+         rep = 2)
+
+paf_bc22_r2 <- read_tsv("nanopore_april_2022/aligned_reads/transcriptome_aligned/bc22_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "targeting_sp2",
+         rep = 2)
+
+all_paf_r2 <- rbind(paf_bc1_r2, paf_bc2_r2, paf_bc3_r2, paf_bc4_r2, paf_bc5_r2, 
+                    paf_bc6_r2, paf_bc7_r2, paf_bc8_r2, paf_bc9_r2, paf_bc10_r2, 
+                    paf_bc11_r2, paf_bc12_r2, paf_bc13_r2, paf_bc14_r2, paf_bc15_r2, 
+                    paf_bc16_r2, paf_bc22_r2)
+
+all_paf_r2$timepoint <- as.double(all_paf_r2$timepoint)
+
+remove(paf_bc1_r2, paf_bc2_r2, paf_bc3_r2, paf_bc4_r2, paf_bc5_r2, 
+                    paf_bc6_r2, paf_bc7_r2, paf_bc8_r2, paf_bc9_r2, paf_bc10_r2, 
+                    paf_bc11_r2, paf_bc12_r2, paf_bc13_r2, paf_bc14_r2, paf_bc15_r2, 
+                    paf_bc16_r2, paf_bc22_r2)
+```
+
+## import rep 3
+
+```{r import paf files}
+#importing and merging paf files
+paf_bc1_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc01_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "no_transduction",
+         rep = 3)
+
+paf_bc2_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc02_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "empty_transduction",
+         rep = 3)
+
+paf_bc3_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc03_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "non_targeting",
+         rep = 3)
+
+paf_bc4_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc04_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 0,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+paf_bc5_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc05_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "empty_transduction",
+         rep = 3)
+
+paf_bc6_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc06_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "non_targeting",
+         rep = 3)
+
+paf_bc7_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc07_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 50,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+paf_bc8_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc08_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "empty_transduction",
+         rep = 3)
+
+paf_bc9_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc09_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "non_targeting",
+         rep = 3)
+
+paf_bc10_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc10_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 200,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+paf_bc11_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc11_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "empty_transduction",
+         rep = 3)
+
+paf_bc12_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc12_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "non_targeting",
+         rep = 3)
+
+paf_bc13_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc13_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 500,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+paf_bc14_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc14_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "empty_transduction",
+         rep = 3)
+
+paf_bc15_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc15_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "non_targeting",
+         rep = 3)
+
+paf_bc16_r3 <- read_tsv("20250701_nanopore_r3_revision/aligned_reads/transcriptome_aligned/bc16_tt.paf", col_names = c("query_name", "query_length", "query_start", "query_end", "strand", "target_name", "target_length", "target_start", "target_end", "num_match", "num_map", "mapq", "type_of_aln", "mm_i", "gn_i", "go_i", "cigar_string")) %>%
+  mutate(timepoint = 1440,
+         treatment = "targeting_sp2",
+         rep = 3)
+
+all_paf_r3 <- rbind(paf_bc1_r3, paf_bc2_r3, paf_bc3_r3, paf_bc4_r3, paf_bc5_r3, 
+                    paf_bc6_r3, paf_bc7_r3, paf_bc8_r3, paf_bc9_r3, paf_bc10_r3, 
+                    paf_bc11_r3, paf_bc12_r3, paf_bc13_r3, paf_bc14_r3, paf_bc15_r3, 
+                    paf_bc16_r3)
+
+all_paf_r3$timepoint <- as.double(all_paf_r3$timepoint)
+
+remove(paf_bc1_r3, paf_bc2_r3, paf_bc3_r3, paf_bc4_r3, paf_bc5_r3, 
+                    paf_bc6_r3, paf_bc7_r3, paf_bc8_r3, paf_bc9_r3, paf_bc10_r3, 
+                    paf_bc11_r3, paf_bc12_r3, paf_bc13_r3, paf_bc14_r3, paf_bc15_r3, 
+                    paf_bc16_r3)
+```
+
+## merge with reference
+
+```{r}
+#merge reference info with paf file
+all_paf_r1 <- all_paf_r1 %>%
+  dplyr::rename("enst" = "target_name") %>%
+  inner_join(ref_meta, by = "enst")
+
+all_paf_r2 <- all_paf_r2 %>%
+  dplyr::rename("enst" = "target_name") %>%
+  inner_join(ref_meta, by = "enst")
+
+all_paf_r3 <- all_paf_r3 %>%
+  dplyr::rename("enst" = "target_name") %>%
+  inner_join(ref_meta, by = "enst")
+```
+
+```{r adding gfp info}
+all_paf_r1 <- all_paf_r1 %>%
+  mutate(transcript_biotype = replace_na(transcript_biotype, replace = "protein_coding"),
+         gene_symbol = if_else(enst == "egfp_puro", "egfp_puro", gene_symbol))
+
+all_paf_r1$treatment <- factor(all_paf_r1$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+
+all_paf_r2 <- all_paf_r2 %>%
+  mutate(transcript_biotype = replace_na(transcript_biotype, replace = "protein_coding"),
+         gene_symbol = if_else(enst == "egfp_puro", "egfp_puro", gene_symbol))
+
+all_paf_r2$treatment <- factor(all_paf_r2$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+
+all_paf_r3 <- all_paf_r3 %>%
+  mutate(transcript_biotype = replace_na(transcript_biotype, replace = "protein_coding"),
+         gene_symbol = if_else(enst == "egfp_puro", "egfp_puro", gene_symbol))
+
+all_paf_r3$treatment <- factor(all_paf_r3$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+```
+
+## merge experiments into single table
+
+```{r}
+all_paf <- rbind(all_paf_r1, all_paf_r2, all_paf_r3)
+```
+
+# plots aligned reads
+
+## transcript biotype plot
+
+```{r}
+new_collabs <- c("Replicate 1", "Replicate 2", "Replicate 3")
+names(new_collabs) <- c(1, 2, 3)
+```
+
+### all 4 other biotypes in one
+
+```{r}
+others_plot <- all_paf %>%
+  filter(type_of_aln == "tp:A:P") %>%
+  filter(transcript_biotype != "rRNA") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  #filter(!(transcript_biotype == "lncRNA" & query_length < 330)) %>% #remove 7SL RNAs mapping to ENST00000655317.1 > doesnt work
+  group_by(treatment, timepoint, rep, transcript_biotype) %>%
+  summarise(count = n()) %>%
+  mutate(fraction = count / sum(count)) -> biotype_fractions
+
+colnames(biotype_fractions)
+```
+
+```{r}
+biotype_barplot <- biotype_fractions %>%
+  filter(transcript_biotype %in% c("protein_coding", "lncRNA", "snoRNA", "snRNA", "misc_RNA")) %>%
+  ggplot(aes(x = as.factor(timepoint), y=fraction, fill = treatment)) +
+    geom_bar(position = "dodge",
+             stat = "summary") +
+    geom_point(position = position_dodge(width = 0.9), 
+               aes(group = treatment)) +
+    stat_summary(fun.data = mean_se, 
+                 geom = "errorbar",
+                 width = 0.5,
+                 aes(group = treatment), 
+                 position = position_dodge(width = 0.9)) +
+    facet_grid(rows = vars(transcript_biotype),
+               scales = "free_y") +
+    scale_fill_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting eGFP"))+
+    scale_y_continuous(labels = scales::percent)+
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 8),
+          strip.text.y = element_text(angle = 0),
+          legend.text = element_text(size = 8)) +
+    labs(x = "Time in minutes after transduction",
+         y = "Percentage of all non rRNA reads",
+         fill = "Treatment")
+biotype_barplot
+```
+
+
+```{r}
+ggsave(
+  filename = "biotype_percentage_barplot_3reps.pdf",
+  plot = biotype_barplot,
+  width = 155,
+  height = 120,
+  units = "mm"
+)
+```
+
+## read length vs reference length
+
+```{r}
+new_labs <- c("Empty iTOP", "Non-targeting", "Targeting dEGFP")
+names(new_labs) <- c("empty_transduction", "non_targeting", "targeting_sp2")
+
+new_collabs <- c("0 min", "50 min", "200 min", "500 min", "1440 min")
+names(new_collabs) <- c(0, 50, 200, 500, 1440)
+```
+
+### use query_length or num_map?
+
+Noticed a population of reads who are bigger than the reference transcript they map to. What are they? Mapped to wrong isoform, long poly-A tails introduced in library prep, or other artifact? Checked reads in the IGV.org/app, displaying soft clipped bases. It seems that the too long reads are caused by a known nanopore artifact where the other strand is read immediately after reading the first strand and merged into the read of the first strand, because for some reads the soft clipped bases are reverse complement of the other half of the read. Consequently, there are lots of reads with are almost exactly 2x the read length of the transcript they map to:
+
+```{r}
+all_paf_r3 %>%
+  filter(treatment == "empty_transduction") %>%
+  filter(type_of_aln == "tp:A:P") %>%
+  filter(transcript_biotype == "protein_coding") %>%
+  filter(timepoint == 1440) %>%
+  filter(gene_symbol != "WDR74") %>% #has extremely high counts due to a small nuclear RNA overlapping with one isoform. 
+  filter(query_length > target_length) %>%
+  ggplot(aes(x = target_length, y = query_length)) +
+    geom_abline(slope = c(1), intercept = 0, lty = "dashed") +
+    geom_point(alpha = 0.01) +
+    scale_x_log10() +
+    scale_y_log10() +
+    theme_bw()
+```
+
+So instead of using the raw read length (query_length), we used the number of mapped bases of the primary alignment per read. This way the Nanopore read through artifact is not included, because it is not part of the primary alignment. 
+
+### integrate all 3 reps
+
+```{r}
+#use description column to find histone genes
+#histone genes are so abundant that they dominate the density plot > remove for plot
+all_paf %>%
+  select(enst, gene_symbol, description) %>%
+  distinct() %>%
+  filter(str_detect(gene_symbol, "^H\\d")) %>%
+  filter(!(gene_symbol %in% c("H19", "H6PD"))) -> histone_genes_all #H19 and H6PD fit the regex but are not histone genes.
+```
+
+```{r}
+plot_all_mrna_length <- all_paf %>%
+  filter(treatment != "no_transduction") %>%
+  filter(type_of_aln == "tp:A:P") %>%
+  filter(transcript_biotype == "protein_coding") %>%
+  filter(gene_symbol != "WDR74") %>% #has extremely high counts due to a small nuclear RNA overlapping with one isoform. 
+  filter(!(treatment == "targeting_sp2" & timepoint == 0 & rep == 1)) %>% # this sample failed library prep
+  anti_join(histone_genes_all, by = "enst") %>% #remove histone genes, which would otherwise dominate the density due to high abundance
+  ggplot(aes(y = num_map, x = target_length)) +
+    geom_abline(slope = 1, intercept = 0, lty = "dashed")+
+    geom_density2d(bins = 13,
+                   contour_var = "density",
+                   size = 0.2,
+                   aes(color = ..level..)) +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(fct_rev(treatment)),
+               labeller = labeller(treatment = fct_rev(new_labs),
+                                   timepoint = new_collabs))+
+    scale_color_viridis_c(name = "Density") +
+    scale_y_log10()+
+    scale_x_log10()+
+    theme_pubr(base_size = 8) +
+    theme(strip.text = element_text(size = 7),
+          strip.text.y = element_text(angle = 0),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "right")+
+    labs(x = "Reference transcript length",
+         y = "Mapped length")
+plot_all_mrna_length
+```
+
+```{r}
+ggsave(
+  filename = "plot_all_mrna_length.pdf",
+  plot = plot_all_mrna_length,
+  width = 170,
+  height = 68,
+  units = "mm")
+```
+
+Same plot but showing density per replicate.
+```{r}
+plot_all_mrna_length_colorrep <- all_paf %>%
+  filter(treatment != "no_transduction") %>%
+  filter(type_of_aln == "tp:A:P") %>%
+  filter(transcript_biotype == "protein_coding") %>%
+  filter(gene_symbol != "WDR74") %>% #has extremely high counts due to a small nuclear RNA overlapping with one isoform. 
+  filter(!(treatment == "targeting_sp2" & timepoint == 0 & rep == 1)) %>% # this sample failed library prep
+  anti_join(histone_genes_all, by = "enst") %>% #remove histone genes, which would otherwise dominate the density due to high abundance
+  ggplot(aes(y = num_map, x = target_length, color = as.factor(rep))) +
+    geom_abline(slope = 1, intercept = 0, lty = "dashed")+
+    geom_density2d(bins = 11,
+                   contour_var = "density",
+                   size = 0.2) +
+    facet_grid(cols = vars(timepoint),
+               rows = vars(fct_rev(treatment)),
+               labeller = labeller(treatment = fct_rev(new_labs),
+                                   timepoint = new_collabs))+
+    scale_color_lancet(name = "Replicate") +
+    scale_y_log10()+
+    scale_x_log10()+
+    theme_pubr(base_size = 8) +
+    theme(strip.text = element_text(size = 7),
+          strip.text.y = element_text(angle = 0),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "right")+
+    labs(x = "Reference transcript length",
+         y = "Mapped length")
+plot_all_mrna_length_colorrep
+```
+
+```{r}
+ggsave(
+  filename = "plot_all_mrna_length_colorrep.pdf",
+  plot = plot_all_mrna_length_colorrep,
+  width = 170,
+  height = 68,
+  units = "mm")
+```
+
+# finding cutsites
+
+## calculate genes with enough expression
+
+```{r}
+select_enst_r1 <- all_paf_r1 %>%
+  group_by(enst) %>%
+  summarise(count = n()) %>%
+  filter(count > 800)
+
+select_enst_r2 <- all_paf_r2 %>%
+  group_by(enst) %>%
+  summarise(count = n()) %>%
+  filter(count > 850)
+
+select_enst_r3 <- all_paf_r3 %>%
+  group_by(enst) %>%
+  summarise(count = n()) %>%
+  filter(count > 800)
+
+#save expression count list
+write_tsv(select_enst_r1, file = "select_enst_r1_800.tsv")
+
+write_tsv(select_enst_r2, file = "select_enst_r2_850.tsv")
+
+write_tsv(select_enst_r3, file = "select_enst_r3_800.tsv")
+```
+
+## importing coverage data
+
+```{r}
+library(data.table)
+```
+
+```{r}
+#fread is much faster and uses much less memory than readr::read_tsv
+all_cov1 <- fread("BOT6354/all_cov.tsv")
+
+#only take transcripts that occur on av 50x per condition
+all_cov1 <- read_tsv("select_enst_r1_800.tsv") %>%
+  left_join(all_cov1)
+
+all_cov1$treatment <- factor(all_cov1$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+```
+
+
+```{r}
+all_cov1 <- all_cov1 %>%
+  mutate(rep = 1)
+```
+
+```{r}
+#fread is much faster and uses much less memory than readr::read_tsv
+all_cov2 <- fread("nanopore_april_2022/all_cov.tsv")
+
+#only take transcripts that occur on av 50x per condition
+all_cov2 <- read_tsv("select_enst_r2_850.tsv") %>%
+  left_join(all_cov2)
+
+all_cov2$treatment <- factor(all_cov2$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+```
+
+```{r}
+#fix rep 1 > 2
+all_cov2 <- all_cov2 %>%
+  mutate(rep = if_else(rep == 1, 4, 2))
+```
+
+```{r}
+#fread is much faster and uses much less memory than readr::read_tsv
+all_cov3 <- fread("20250701_nanopore_r3_revision/all_cov_r3.tsv")
+
+#only take transcripts that occur on av 50x per condition
+all_cov3 <- read_tsv("select_enst_r3_800.tsv") %>% 
+  left_join(all_cov3)
+
+all_cov3$treatment <- factor(all_cov3$treatment, levels = c("no_transduction", "empty_transduction", "non_targeting", "targeting_sp2"))
+```
+
+```{r}
+#joining together
+all_cov <- rbind(all_cov1, all_cov2, all_cov3)
+```
+
+```{r}
+#add reference info
+all_cov <- all_cov %>%
+  left_join(ref_meta)
+```
+
+## coverage plots
+
+### target RNA coverage plot
+
+```{r}
+new_labs <- c("Replicate 1", "Replicate 2", "Replicate 3")
+names(new_labs) <- c(1, 2, 3)
+
+new_collabs <- c("0 min", "50 min", "200 min", "500 min", "1440 min")
+names(new_collabs) <- c(0, 50, 200, 500, 1440)
+```
+
+```{r}
+cov_gfp <- all_cov %>%
+  filter(enst == "egfp_puro") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_vline(xintercept = 3943, lty = "dashed", size = 0.2)+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    coord_cartesian(xlim = c(3200, 6300)) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "Target RNA: dEGFP-IRES-PuroR")
+cov_gfp
+```
+
+```{r}
+ggsave(
+  filename = "cov_gfp_3reps.pdf",
+  plot = cov_gfp,
+  width = 170,
+  height = 65,
+  units = "mm"
+)
+```
+
+### GAPDH-205 coverage plots
+
+```{r}
+cov_GAPDH205 <- all_cov %>%
+  filter(enst == "ENST00000396861.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "GAPDH-205")
+cov_GAPDH205
+```
+
+```{r}
+ggsave(
+  filename = "cov_gapdh205_3reps.pdf",
+  plot = cov_GAPDH205,
+  width = 170,
+  height = 70,
+  units = "mm"
+)
+```
+
+### ACTB-217 coverage plots
+
+```{r}
+cov_actb217 <- all_cov %>%
+  filter(enst == "ENST00000646664.1") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "ACTB-217")
+cov_actb217
+```
+
+```{r}
+ggsave(
+  filename = "cov_actb217_3reps.pdf",
+  plot = cov_actb217,
+  width = 170,
+  height = 70,
+  units = "mm"
+)
+```
+
+### rps19 coverage plots
+
+```{r}
+cov_rps19 <- all_cov %>%
+  filter(enst == "ENST00000593863.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    #scale_y_log10() +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "RPS19-202")
+cov_rps19
+```
+
+```{r}
+ggsave(
+  filename = "cov_rps19_3reps.pdf",
+  plot = cov_rps19,
+  width = 170,
+  height = 65,
+  units = "mm"
+)
+```
+
+### other genes
+
+Exploring table / finding ENST of genes
+```{r}
+all_cov %>%
+  filter(gene_symbol == "RN7SL1") %>%
+  group_by(enst) %>%
+  summarise(sum_cov = sum(cov_count)) %>%
+  arrange(desc(sum_cov))
+```
+
+```{r}
+cov_other <- all_cov %>%
+  filter(enst == "ENST00000618786.1") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "RN7SL1")
+cov_other
+```
+
+```{r}
+ggsave(
+  filename = "cov_RN7SL1_3reps.pdf",
+  plot = cov_other,
+  width = 170,
+  height = 70,
+  units = "mm"
+)
+```
+
+## rRNA coverage plots
+
+18S: NR_003286.4
+28S: NR_003287.4
+
+### 28S 
+
+```{r}
+all_cov %>%
+  filter(enst == "NR_003287.4") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    #coord_cartesian(xlim = c(4020, 4060)) +
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "28S rRNA")
+```
+
+### 18S
+
+```{r}
+all_cov %>%
+  filter(enst == "NR_003286.4") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP", "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    #coord_cartesian(xlim = c(750, 800)) +
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "18S rRNA")
+```
+
+## close look at cut sites
+
+### gapdh205
+
+```{r}
+cutsite_GAPDH205 <- all_cov %>%
+  filter(enst == "ENST00000396861.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  filter(timepoint %in% c(50, 200)) %>%
+  filter(position > 950 & position < 1050) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_vline(xintercept = c(982, 995), lty = "dashed") +
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(timepoint = new_collabs)) +
+    scale_color_manual(values = c("#efc000", "#868686", "#cd534c"), name = "Treatment",
+                      labels = c("Empty iTOP", "Non-targeting", "Targeting dEGFP")) +
+    theme_bw(base_size = 8) +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "GAPDH-205")
+cutsite_GAPDH205
+```
+
+```{r}
+ggsave(
+  filename = "cutsite_GAPDH205_3reps.pdf",
+  plot = cutsite_GAPDH205,
+  width = 85,
+  height = 68,
+  units = "mm"
+)
+```
+
+### dEGFP
+
+```{r}
+cutsite_degfp <- all_cov %>%
+  filter(enst == "egfp_puro") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  #filter(timepoint %in% c(50, 200, 500)) %>%
+  filter(position > 3900 & position < 4000) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_vline(xintercept = c(3943, 3970), lty = "dashed") +
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(treatment),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_jco(labels = c("No iTOP",  "Empty iTOP", "Non-targeting", "Targeting")
+      ) +
+    theme_pubr(base_size = 8,
+               legend = "right") +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "deGFP-IRES-PuroR protospacer")
+cutsite_degfp
+```
+
+```{r}
+ggsave(
+  filename = "cutsite_degfp_3reps.pdf",
+  plot = cutsite_degfp,
+  width = 150,
+  height = 60,
+  units = "mm"
+)
+```
+
+### RPS19
+
+```{r}
+cutsite_rps19 <- all_cov %>%
+  filter(enst == "ENST00000593863.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  filter(timepoint %in% c(50, 200)) %>%
+  filter(position > 200 & position < 300) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_vline(xintercept = c(246, 254), lty = "dashed") +
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_manual(values = c("#efc000", "#868686", "#cd534c"), name = "Treatment",
+                      labels = c("Empty iTOP", "Non-targeting", "Targeting dEGFP")) +
+    theme_bw(base_size = 8) +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank())+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "RPS19-202")
+cutsite_rps19
+```
+
+```{r}
+ggsave(
+  filename = "cutsite_rps19_3reps.pdf",
+  plot = cutsite_rps19,
+  width = 85,
+  height = 68,
+  units = "mm"
+)
+```
+
+### 18S
+
+```{r}
+cutsite_18S <- all_cov %>%
+  filter(enst == "NR_003286.4") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  filter(timepoint %in% c(50, 200, 500)) %>%
+  filter(position > 725 & position < 825) %>%
+  ggplot(aes(x = position, y = cov_count / n_reads, color = treatment, group = interaction(rep, treatment)))+
+    geom_vline(xintercept = c(774, 788), lty = "dashed") +
+    geom_line(size = 0.4)+
+    facet_grid(cols = vars(timepoint),
+               rows = vars(rep),
+               labeller = labeller(rep = new_labs,
+                                   timepoint = new_collabs)) +
+    scale_color_manual(values = c("#efc000", "#868686", "#cd534c"), name = "Treatment",
+                      labels = c("Empty iTOP", "Non-targeting", "Targeting dEGFP")) +
+    theme_bw(base_size = 8) +
+    theme(strip.text = element_text(size = 7),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank(),
+          legend.position = "none")+
+    labs(x = "Position",
+         y = "Transcript coverage",
+         title = "18S rRNA")
+cutsite_18S
+```
+
+```{r}
+ggsave(
+  filename = "cutsite_18S_3reps.pdf",
+  plot = cutsite_18S,
+  width = 70,
+  height = 68,
+  units = "mm"
+)
+```
+
+# saving main figure data
+
+## density plot
+reads are available at the NCBI SRA PRJNA912090. 
+
+## specific transcript coverage plots
+```{r}
+#dEGFP
+all_cov %>%
+  filter(enst == "egfp_puro") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  select(position, cov_count, n_reads, rep, timepoint, treatment) %>%
+  write_tsv("data_figure_egfp_coverage.txt")
+
+#RPS19
+all_cov %>%
+  filter(enst == "ENST00000593863.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  select(position, cov_count, n_reads, rep, timepoint, treatment) %>%
+  write_tsv("data_figure_rps19_coverage.txt")
+
+#RPS19 zoom
+all_cov %>%
+  filter(enst == "ENST00000593863.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  filter(timepoint %in% c(50, 200)) %>%
+  filter(position > 200 & position < 300) %>%
+  select(position, cov_count, n_reads, rep, timepoint, treatment) %>%
+  write_tsv("data_figure_rps19_zoom_coverage.txt")
+
+#GAPDH zoom
+all_cov %>%
+  filter(enst == "ENST00000396861.5") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  filter(timepoint %in% c(50, 200)) %>%
+  filter(position > 950 & position < 1050) %>%
+  write_tsv("data_figure_gapdh_zoom_coverage.txt")
+
+#18S rRNA zoom
+all_cov %>%
+  filter(enst == "NR_003286.4") %>%
+  filter(!(rep == 1 & treatment == "targeting_sp2" & timepoint == 0)) %>%
+  filter(rep != 4) %>%
+  filter(timepoint %in% c(50, 200, 500)) %>%
+  filter(position > 725 & position < 825) %>%
+  write_tsv("data_figure_18SrRNA_zoom_coverage.txt")
+```
