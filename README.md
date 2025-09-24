@@ -10,4 +10,4 @@ RNA-seq data and count table is available online at the NCBI Gene expression omn
 
 ## Total RNA sequencing with ERCC spike-in control RNAs
 The total_rna_ERCC folder contains experimental design matrices, the table with ERCC spike-in RNA concentrations, and the R code of the analysis with DESeq2. 
-Raw fastq files and the count table are available at the NCBI Gene expression omnibus (Pending)
+Raw fastq files and the count table are available at the NCBI Gene expression omnibus (GSE308909)
